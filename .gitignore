@@ -1,0 +1,86 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extensions
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# sprachspiel specific
+config.yaml
+*.apkg
+queue.json
+media/
+output/
+
+# uv
+.uv/
+uv.lock
+# Allow uv.lock for version control
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+tmp/
+temp/
+
+# Node (for browser plugin development)
+node_modules/
+npm-debug.log*
+
+# uv.lock - allow for version control
+!uv.lock

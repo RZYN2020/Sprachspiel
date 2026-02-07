@@ -1,0 +1,184 @@
+"""Text-to-Speech service for audio generation."""
+
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+from sprachspiel.config import Config
+
+
+class TTSService:
+    """Service for text-to-speech synthesis."""
+
+    def __init__(self, config: Config):
+        """Initialize TTS service.
+
+        Args:
+            config: Configuration instance.
+        """
+        self.config = config
+        self.tts_providers = config.get("tts", [])
+        self.media_dir = Path(config.get("media.storage_dir", "./media"))
+        self.audio_format = config.get("media.audio_format", "mp3")
+
+    def is_configured(self) -> bool:
+        """Check if TTS service is configured.
+
+        Returns:
+            True if at least one TTS provider is configured.
+        """
+        return len(self.tts_providers) > 0
+
+    async def synthesize(self, text: str, voice: Optional[str] = None) -> str:
+        """Synthesize audio for text.
+
+        Args:
+            text: Text to synthesize.
+            voice: Optional voice override.
+
+        Returns:
+            Path to generated audio file.
+        """
+        if not self.tts_providers:
+            raise RuntimeError("No TTS provider configured")
+
+        for provider_config in self.tts_providers:
+            try:
+                return await self._synthesize_provider(text, provider_config, voice)
+            except Exception as e:
+                print(f"TTS synthesis failed for {provider_config.get('name')}: {e}")
+
+        raise RuntimeError("All TTS providers failed")
+
+    async def _synthesize_provider(
+        self, text: str, provider_config: Dict[str, Any], voice: Optional[str]
+    ) -> str:
+        """Synthesize audio using specific provider.
+
+        Args:
+            text: Text to synthesize.
+            provider_config: Provider configuration.
+            voice: Optional voice override.
+
+        Returns:
+            Path to generated audio file.
+        """
+        module_name = provider_config.get("module")
+
+        # Custom module support
+        if "." in module_name:
+            return await self._synthesize_custom(text, provider_config, voice)
+
+        # Built-in providers
+        if module_name == "tts.google_translate":
+            return await self._synthesize_google(text, provider_config, voice)
+        elif module_name == "tts.azure":
+            return await self._synthesize_azure(text, provider_config, voice)
+
+        raise RuntimeError(f"Unknown TTS provider: {module_name}")
+
+    async def _synthesize_custom(
+        self, text: str, provider_config: Dict[str, Any], voice: Optional[str]
+    ) -> str:
+        """Synthesize audio using custom TTS module.
+
+        Args:
+            text: Text to synthesize.
+            provider_config: Provider configuration.
+            voice: Optional voice override.
+
+        Returns:
+            Path to generated audio file.
+        """
+        from importlib import import_module
+
+        module_name = provider_config.get("module")
+
+        parts = module_name.split(".")
+        module = import_module(".".join(parts[:-1]))
+        synthesize_func = getattr(module, parts[-1])
+
+        result = await synthesize_func(text, provider_config, voice or provider_config.get("voice"))
+
+        # Return path or create from result
+        if isinstance(result, str):
+            # If result is a path, return it
+            if Path(result).exists():
+                return result
+
+        # Create output file path
+        output_file = self.media_dir / f"{text[:50].replace(' ', '_')}.{self.audio_format}"
+        return str(output_file)
+
+    async def _synthesize_google(
+        self, text: str, provider_config: Dict[str, Any], voice: Optional[str] = None
+    ) -> str:
+        """Synthesize audio using Google Translate TTS.
+
+        Args:
+            text: Text to synthesize.
+            provider_config: Provider configuration.
+            voice: Optional voice override.
+
+        Returns:
+            Path to generated audio file.
+        """
+        import requests
+
+        # Google Translate TTS (free, no API key needed)
+        lang = voice or provider_config.get("voice", "en-US")
+
+        url = f"https://translate.google.com/translate_tts"
+        params = {
+            "client": "tw-ob",
+            "q": text,
+            "tl": lang,
+        }
+
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+
+        # Save to file
+        output_file = self.media_dir / f"{text[:50].replace(' ', '_')}.{self.audio_format}"
+        self.media_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(output_file, "wb") as f:
+            f.write(response.content)
+
+        return str(output_file)
+
+    async def _synthesize_azure(
+        self, text: str, provider_config: Dict[str, Any], voice: Optional[str] = None
+    ) -> str:
+        """Synthesize audio using Azure TTS.
+
+        Args:
+            text: Text to synthesize.
+            provider_config: Provider configuration.
+            voice: Optional voice override.
+
+        Returns:
+            Path to generated audio file.
+        """
+        # Azure Cognitive Services Speech SDK
+        # Note: Requires azure-cognitiveservices-speech library
+        raise NotImplementedError(
+            "Azure TTS requires azure-cognitiveservices-speech library. Install with: pip install azure-cognitiveservices-speech"
+        )
+
+    async def synthesize_context(
+        self, text: str, max_length: int = 200
+    ) -> Optional[str]:
+        """Synthesize audio for context text (truncated).
+
+        Args:
+            text: Context text (may be long).
+            max_length: Maximum characters to synthesize.
+
+        Returns:
+            Path to generated audio file, or None if text too long.
+        """
+        # Truncate text to max_length
+        if len(text) > max_length:
+            return None
+
+        return await self.synthesize(text)
