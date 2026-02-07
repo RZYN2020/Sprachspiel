@@ -64,16 +64,10 @@ Repository = "https://github.com/yourusername/sprachspiel"
 [project.gui-scripts]
 sprachspiel-gui = "sprachspiel.cli:main"
 
-[setuptools]
-packages = [
-    "sprachspiel",
-    "sprachspiel.anki",
-    "sprachspiel.core",
-    "sprachspiel.parsers",
-    "sprachspiel.server",
-    "sprachspiel.services",
-    "sprachspiel.sources",
-]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sprachspiel*"]
+exclude = ["openspec*"]
 
 [tool.black]
 line-length = 100
