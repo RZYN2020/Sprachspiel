@@ -13,6 +13,8 @@ Anki card generation assistant for language learners.
 
 ## Installation
 
+### Using pip
+
 ```bash
 pip install sprachspiel
 ```
@@ -20,6 +22,28 @@ pip install sprachspiel
 For optional mpv player integration:
 ```bash
 pip install sprachspiel[mpv]
+```
+
+### Using uv (recommended)
+
+uv is a fast Python package manager and project manager.
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repository
+git clone https://github.com/yourusername/sprachspiel.git
+cd sprachspiel
+
+# Sync dependencies
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Or use uv to run commands directly
+uv run sprachspiel start
 ```
 
 ## Quick Start
@@ -226,6 +250,8 @@ Functions:
 
 ## Development
 
+### Using pip
+
 ```bash
 # Install with development dependencies
 pip install -e ".[dev]"
@@ -241,6 +267,25 @@ black sprachspiel tests
 
 # Lint code
 ruff check sprachspiel tests
+```
+
+### Using uv
+
+```bash
+# Sync all dependencies including development
+uv sync --extra dev
+
+# Run tests
+uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=sprachspiel --cov-report=html
+
+# Format code
+uv run black sprachspiel tests
+
+# Lint code
+uv run ruff check sprachspiel tests
 ```
 
 ## Project Structure
