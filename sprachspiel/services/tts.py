@@ -1,7 +1,7 @@
 """Text-to-Speech service for audio generation."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from sprachspiel.config import Config
 
@@ -50,7 +50,7 @@ class TTSService:
         raise RuntimeError("All TTS providers failed")
 
     async def _synthesize_provider(
-        self, text: str, provider_config: Dict[str, Any], voice: Optional[str]
+        self, text: str, provider_config: dict[str, Any], voice: Optional[str]
     ) -> str:
         """Synthesize audio using specific provider.
 
@@ -77,7 +77,7 @@ class TTSService:
         raise RuntimeError(f"Unknown TTS provider: {module_name}")
 
     async def _synthesize_custom(
-        self, text: str, provider_config: Dict[str, Any], voice: Optional[str]
+        self, text: str, provider_config: dict[str, Any], voice: Optional[str]
     ) -> str:
         """Synthesize audio using custom TTS module.
 
@@ -110,7 +110,7 @@ class TTSService:
         return str(output_file)
 
     async def _synthesize_google(
-        self, text: str, provider_config: Dict[str, Any], voice: Optional[str] = None
+        self, text: str, provider_config: dict[str, Any], voice: Optional[str] = None
     ) -> str:
         """Synthesize audio using Google Translate TTS.
 
@@ -127,7 +127,7 @@ class TTSService:
         # Google Translate TTS (free, no API key needed)
         lang = voice or provider_config.get("voice", "en-US")
 
-        url = f"https://translate.google.com/translate_tts"
+        url = "https://translate.google.com/translate_tts"
         params = {
             "client": "tw-ob",
             "q": text,
@@ -147,7 +147,7 @@ class TTSService:
         return str(output_file)
 
     async def _synthesize_azure(
-        self, text: str, provider_config: Dict[str, Any], voice: Optional[str] = None
+        self, text: str, provider_config: dict[str, Any], voice: Optional[str] = None
     ) -> str:
         """Synthesize audio using Azure TTS.
 

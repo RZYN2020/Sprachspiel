@@ -1,7 +1,6 @@
 """Dictionary service for word lookups."""
 
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sprachspiel.config import Config
 
@@ -26,7 +25,7 @@ class DictionaryService:
         """
         return len(self.dictionaries) > 0
 
-    async def lookup(self, word: str) -> Dict[str, Any]:
+    async def lookup(self, word: str) -> dict[str, Any]:
         """Look up word in configured dictionaries.
 
         Args:
@@ -51,8 +50,8 @@ class DictionaryService:
         return result
 
     async def _lookup_dictionary(
-        self, word: str, dict_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, word: str, dict_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Look up word in specific dictionary.
 
         Args:
@@ -79,8 +78,8 @@ class DictionaryService:
         return result
 
     async def _lookup_custom(
-        self, word: str, dict_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, word: str, dict_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Look up word using custom dictionary module.
 
         Args:
@@ -106,8 +105,8 @@ class DictionaryService:
             raise RuntimeError(f"Failed to load custom dictionary {module_name}: {e}") from e
 
     async def _lookup_oxford(
-        self, word: str, dict_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, word: str, dict_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Look up word in Oxford dictionary.
 
         Args:
@@ -162,8 +161,8 @@ class DictionaryService:
         return result
 
     async def _lookup_youdao(
-        self, word: str, dict_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, word: str, dict_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Look up word in Youdao dictionary.
 
         Args:

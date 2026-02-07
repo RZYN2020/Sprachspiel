@@ -1,7 +1,6 @@
 """Base Anki connector interface."""
 
 from abc import ABC, abstractmethod
-from typing import List
 
 from sprachspiel.core.card import AnkiCard
 
@@ -34,7 +33,7 @@ class BaseAnkiConnector(ABC):
         pass
 
     @abstractmethod
-    async def add_notes_batch(self, cards: List[AnkiCard]) -> List[str]:
+    async def add_notes_batch(self, cards: list[AnkiCard]) -> list[str]:
         """Add multiple notes to Anki.
 
         Args:

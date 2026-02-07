@@ -1,8 +1,9 @@
 """Tests for configuration management."""
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 
 from sprachspiel.config import Config, ConfigValidationError
 
@@ -26,7 +27,19 @@ def test_config_get():
 def test_config_set():
     """Test setting config values."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("anki:\n  mode: connect\n")
+        f.write("""anki:
+  mode: connect
+  connect:
+    host: localhost
+    port: 8765
+  file:
+    output_dir: ./output
+    deck_name: Sprachspiel
+card_generation:
+  mode: queue
+media:
+  organization: hierarchical
+""")
 
     config = Config(Path(f.name))
     assert config.get("anki.mode") == "connect"

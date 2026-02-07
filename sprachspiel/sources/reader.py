@@ -1,6 +1,5 @@
 """Reader data source for PDF/EPUB/Text files."""
 
-import re
 from pathlib import Path
 from typing import Optional
 
@@ -96,7 +95,7 @@ class ReaderDataSource(BaseDataSource):
         Returns:
             Text file content.
         """
-        with open(self.file_path, "r", encoding="utf-8") as f:
+        with open(self.file_path, encoding="utf-8") as f:
             return f.read()
 
     def _build_line_map(self) -> dict:

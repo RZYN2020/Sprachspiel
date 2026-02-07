@@ -7,10 +7,10 @@ import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
-from sprachspiel.config import Config
 from sprachspiel.anki.base import BaseAnkiConnector
+from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard
 
 
@@ -52,7 +52,7 @@ class FileExporter(BaseAnkiConnector):
         """
         return True
 
-    async def add_notes_batch(self, cards: List[AnkiCard]) -> List[str]:
+    async def add_notes_batch(self, cards: list[AnkiCard]) -> list[str]:
         """Add multiple notes to export.
 
         Args:
@@ -65,7 +65,7 @@ class FileExporter(BaseAnkiConnector):
             "Batch note export not supported. Use export_cards() for export."
         )
 
-    def export_cards(self, cards: List[AnkiCard], output_dir: Optional[Path] = None) -> Path:
+    def export_cards(self, cards: list[AnkiCard], output_dir: Optional[Path] = None) -> Path:
         """Export cards to as .apkg file.
 
         Args:
@@ -101,7 +101,7 @@ class FileExporter(BaseAnkiConnector):
 
         return apkg_path
 
-    def _create_anki_package(self, cards: List[AnkiCard], output_dir: Path) -> None:
+    def _create_anki_package(self, cards: list[AnkiCard], output_dir: Path) -> None:
         """Create Anki package directory structure.
 
         Args:
@@ -176,7 +176,7 @@ class FileExporter(BaseAnkiConnector):
             json.dump(deck_json, f, ensure_ascii=False)
 
         # Write notes.json
-        with open(deck) / "notes.json", "w", encoding="utf-8") as f:
+        with open(deck_dir / "notes.json", "w", encoding="utf-8") as f:
             json.dump(notes, f, ensure_ascii=False)
 
         # Create meta.json
@@ -191,7 +191,7 @@ class FileExporter(BaseAnkiConnector):
         with open(output_dir / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta_json, f, ensure_ascii=False)
 
-    def _get_field_names(self, cards: List[AnkiCard]) -> set:
+    def _get_field_names(self, cards: list[AnkiCard]) -> set:
         """Get all field names from cards.
 
         Args:
@@ -211,7 +211,7 @@ class FileExporter(BaseAnkiConnector):
 
         return list(field_names)
 
-    def _get_front_template(self, cards: List[AnkiCard]) -> str:
+    def _get_front_template(self, cards: list[AnkiCard]) -> str:
         """Get front template from cards.
 
         Args:
@@ -229,9 +229,9 @@ class FileExporter(BaseAnkiConnector):
                 front_field = field
                 break
 
-        return f"{{{{{front_field}}}}"
+        return "{{" + front_field + "}}"
 
-    def _get_back_template(self, cards: List[AnkiCard]) -> str:
+    def _get_back_template(self, cards: list[AnkiCard]) -> str:
         """Get back template from cards.
 
         Args:
@@ -248,7 +248,7 @@ class FileExporter(BaseAnkiConnector):
                 back_field = field
                 break
 
-        return f"{{{{{back_field}}}}"
+        return "{{" + back_field + "}}"
 
     def _generate_guid(self, index: int) -> str:
         """Generate GUID for note.

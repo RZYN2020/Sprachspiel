@@ -1,13 +1,11 @@
 """AnkiConnect connector for Sprachspiel."""
 
-import json
 import time
-from typing import List
 
 import requests
 
-from sprachspiel.config import Config
 from sprachspiel.anki.base import BaseAnkiConnector
+from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard
 
 
@@ -123,12 +121,12 @@ class AnkiConnect(BaseAnkiConnector):
             True if connected.
         """
         try:
-            result = self._request("version")
+            self._request("version")
             return True
         except Exception:
             return False
 
-    async def add_notes_batch(self, cards: List[AnkiCard]) -> List[str]:
+    async def add_notes_batch(self, cards: list[AnkiCard]) -> list[str]:
         """Add multiple notes to Anki.
 
         Args:
@@ -157,7 +155,7 @@ class AnkiConnect(BaseAnkiConnector):
         # Return successful note IDs (non-None values)
         return [str(note_id) for note_id in result if note_id is not None]
 
-    def get_deck_names(self) -> List[str]:
+    def get_deck_names(self) -> list[str]:
         """Get list of deck names.
 
         Returns:
@@ -165,7 +163,7 @@ class AnkiConnect(BaseAnkiConnector):
         """
         return self._request("deckNames")
 
-    def get_model_names(self) -> List[str]:
+    def get_model_names(self) -> list[str]:
         """Get list of model names.
 
         Returns:
@@ -188,7 +186,7 @@ class AnkiConnect(BaseAnkiConnector):
         except Exception:
             return False
 
-    def create_model(self, model_name: str, fields: List[str]) -> bool:
+    def create_model(self, model_name: str, fields: list[str]) -> bool:
         """Create a new model.
 
         Args:

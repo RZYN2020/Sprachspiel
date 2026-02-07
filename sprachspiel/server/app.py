@@ -1,16 +1,17 @@
 """FastAPI application for Sprachspiel server."""
 
+from datetime import datetime
 from typing import Optional
 
 import fastapi
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from sprachspiel.config import Config
-from sprachspiel.core.card import CardData, CardMetadata, Media
-from sprachspiel.core.queue import CardQueue
+from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.core.engine import CardEngine
+from sprachspiel.core.queue import CardQueue
 
 
 # Pydantic models for API
@@ -386,5 +387,4 @@ def _save_base64_audio(data: str, config: Config) -> Optional[str]:
 
 def _get_datetime() -> datetime:
     """Get current datetime."""
-    from datetime import datetime
     return datetime.utcnow()

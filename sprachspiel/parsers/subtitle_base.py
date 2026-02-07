@@ -2,8 +2,8 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
 from datetime import timedelta
+from typing import Optional
 
 
 @dataclass
@@ -20,7 +20,7 @@ class BaseSubtitleParser(ABC):
     """Base class for subtitle parsers."""
 
     @abstractmethod
-    def parse(self, content: str) -> List[SubtitleEntry]:
+    def parse(self, content: str) -> list[SubtitleEntry]:
         """Parse subtitle content.
 
         Args:
@@ -32,7 +32,7 @@ class BaseSubtitleParser(ABC):
         pass
 
     @abstractmethod
-    def find_entry_at_time(self, entries: List[SubtitleEntry], timestamp: timedelta) -> Optional[SubtitleEntry]:
+    def find_entry_at_time(self, entries: list[SubtitleEntry], timestamp: timedelta) -> Optional[SubtitleEntry]:
         """Find subtitle entry at given timestamp.
 
         Args:

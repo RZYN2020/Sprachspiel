@@ -1,6 +1,5 @@
 """Tests for card engine."""
 
-import pytest
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata

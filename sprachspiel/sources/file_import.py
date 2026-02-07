@@ -1,7 +1,7 @@
 """File import data source for CSV and text files."""
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
@@ -55,7 +55,7 @@ class FileImportSource(BaseDataSource):
 
         data = []
 
-        with open(self.file_path, "r", encoding="utf-8", newline="") as f:
+        with open(self.file_path, encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
 
             for row in reader:
@@ -79,7 +79,7 @@ class FileImportSource(BaseDataSource):
         """
         data = []
 
-        with open(self.file_path, "r", encoding="utf-8") as f:
+        with open(self.file_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
 
@@ -116,7 +116,7 @@ class FileImportSource(BaseDataSource):
             ),
         )
 
-    def get_all_cards(self) -> List[CardData]:
+    def get_all_cards(self) -> list[CardData]:
         """Get all cards from import data.
 
         Returns:

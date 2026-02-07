@@ -1,7 +1,6 @@
 """AI model service for translation and example generation."""
 
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sprachspiel.config import Config
 
@@ -41,7 +40,7 @@ class AIService:
         """
         return name in self.functions
 
-    def get_custom_functions(self) -> Dict[str, Any]:
+    def get_custom_functions(self) -> dict[str, Any]:
         """Get custom AI functions (non-reserved).
 
         Returns:
@@ -93,7 +92,6 @@ class AIService:
         Returns:
             AI response.
         """
-        import requests
 
         if self.provider == "openai" or "api.openai.com" in self.base_url:
             return await self._call_openai(prompt)

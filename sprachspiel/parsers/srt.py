@@ -1,7 +1,6 @@
 """SRT subtitle parser."""
 
 import re
-from typing import List
 
 from sprachspiel.parsers.subtitle_base import BaseSubtitleParser, SubtitleEntry
 
@@ -19,7 +18,7 @@ class SRTParser(BaseSubtitleParser):
     , re.DOTALL | re.MULTILINE
     )
 
-    def parse(self, content: str) -> List[SubtitleEntry]:
+    def parse(self, content: str) -> list[SubtitleEntry]:
         """Parse SRT subtitle content.
 
         Args:
@@ -49,8 +48,8 @@ class SRTParser(BaseSubtitleParser):
         return entries
 
     def find_entry_at_time(
-        self, entries: List[SubtitleEntry], timestamp
-    ) -> List[SubtitleEntry] | None:
+        self, entries: list[SubtitleEntry], timestamp
+    ) -> list[SubtitleEntry] | None:
         """Find subtitle entry at given timestamp.
 
         Args:

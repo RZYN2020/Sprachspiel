@@ -1,7 +1,7 @@
 """ASS/SSA subtitle parser."""
 
 import re
-from typing import List
+from datetime import timedelta
 
 from sprachspiel.parsers.subtitle_base import BaseSubtitleParser, SubtitleEntry
 
@@ -19,7 +19,7 @@ class ASSParser(BaseSubtitleParser):
         r"(.+)"  # Text (last field)
     )
 
-    def parse(self, content: str) -> List[SubtitleEntry]:
+    def parse(self, content: str) -> list[SubtitleEntry]:
         """Parse ASS subtitle content.
 
         Args:
@@ -52,8 +52,8 @@ class ASSParser(BaseSubtitleParser):
         return entries
 
     def find_entry_at_time(
-        self, entries: List[SubtitleEntry], timestamp
-    ) -> List[SubtitleEntry] | None:
+        self, entries: list[SubtitleEntry], timestamp
+    ) -> list[SubtitleEntry] | None:
         """Find subtitle entry at given timestamp.
 
         Args:

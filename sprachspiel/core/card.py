@@ -3,8 +3,7 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -31,8 +30,6 @@ class CardMetadata:
 class CardData:
     """Data for a single Anki card."""
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
-
     # Core content
     word: str
     context: str
@@ -49,9 +46,12 @@ class CardData:
     metadata: CardMetadata = field(default_factory=CardMetadata)
 
     # Custom data (from AI functions, etc.)
-    custom_data: Dict[str, Any] = field(default_factory=dict)
+    custom_data: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    # Unique identifier
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert card to dictionary.
 
         Returns:
@@ -80,7 +80,7 @@ class CardData:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CardData":
+    def from_dict(cls, data: dict[str, Any]) -> "CardData":
         """Create card from dictionary.
 
         Args:
@@ -123,7 +123,7 @@ class AnkiCard:
 
     deck_name: str
     model_name: str
-    fields: Dict[str, str]
-    tags: List[str]
-    audio_files: List[str]  # List of audio files to embed
-    image_files: List[str]  # List of image files to embed
+    fields: dict[str, str]
+    tags: list[str]
+    audio_files: list[str]  # List of audio files to embed
+    image_files: list[str]  # List of image files to embed

@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Optional
 
 from sprachspiel.config import Config
-from sprachspiel.core.card import CardData, CardMetadata, Media
-from sprachspiel.sources.base import BaseDataSource
-from sprachspiel.parsers.subtitle_base import BaseSubtitleParser
-from sprachspiel.parsers.srt import SRTParser
-from sprachspiel.parsers.vtt import VTTParser
+from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.parsers.ass import ASSParser
+from sprachspiel.parsers.srt import SRTParser
+from sprachspiel.parsers.subtitle_base import BaseSubtitleParser
+from sprachspiel.parsers.vtt import VTTParser
+from sprachspiel.sources.base import BaseDataSource
 
 
 class PlayerDataSource(BaseDataSource):
@@ -58,7 +58,7 @@ class PlayerDataSource(BaseDataSource):
         if not self.subtitle_path.exists():
             return []
 
-        with open(self.subtitle_path, "r", encoding="utf-8") as f:
+        with open(self.subtitle_path, encoding="utf-8") as f:
             content = f.read()
 
         return self.parser.parse(content)

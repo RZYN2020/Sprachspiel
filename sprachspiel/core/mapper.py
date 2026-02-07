@@ -2,9 +2,9 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
-from sprachspiel.core.card import CardData, AnkiCard
+from sprachspiel.core.card import AnkiCard, CardData
 
 
 class TemplateError(Exception):
@@ -79,7 +79,7 @@ class FieldMapper:
             image_files=image_files,
         )
 
-    def _build_variable_context(self, card: CardData) -> Dict[str, Any]:
+    def _build_variable_context(self, card: CardData) -> dict[str, Any]:
         """Build variable context for template substitution.
 
         Args:
@@ -116,7 +116,7 @@ class FieldMapper:
 
         return variables
 
-    def _substitute_template(self, template: str, variables: Dict[str, Any]) -> str:
+    def _substitute_template(self, template: str, variables: dict[str, Any]) -> str:
         """Substitute template variables.
 
         Args:

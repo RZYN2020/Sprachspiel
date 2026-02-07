@@ -1,10 +1,8 @@
 """Card queue management for Sprachspiel."""
 
 import json
-from pathlib import Path
-from typing import Dict, List
 
-from sprachspiel.config import Config, QUEUE_DIR
+from sprachspiel.config import QUEUE_DIR, Config
 from sprachspiel.core.card import CardData
 
 
@@ -19,7 +17,7 @@ class CardQueue:
         """
         self.config = config
         self.queue_file = QUEUE_DIR / "queue.json"
-        self._queue: Dict[str, CardData] = {}
+        self._queue: dict[str, CardData] = {}
         self._load()
 
     def _load(self) -> None:
@@ -29,7 +27,7 @@ class CardQueue:
             return
 
         try:
-            with open(self.queue_file, "r", encoding="utf-8") as f:
+            with open(self.queue_file, encoding="utf-8") as f:
                 data = json.load(f)
                 self._queue = {k: CardData.from_dict(v) for k, v in data.items()}
         except (json.JSONDecodeError, KeyError, TypeError) as e:
@@ -81,7 +79,7 @@ class CardQueue:
             return True
         return False
 
-    def get_all(self) -> List[CardData]:
+    def get_all(self) -> list[CardData]:
         """Get all cards in queue.
 
         Returns:
@@ -110,7 +108,7 @@ class CardQueue:
         """
         return len(self._queue) == 0
 
-    def get_batch(self, batch_size: int) -> List[CardData]:
+    def get_batch(self, batch_size: int) -> list[CardData]:
         """Get a batch of cards.
 
         Args:
@@ -122,7 +120,7 @@ class CardQueue:
         cards = list(self._queue.values())[:batch_size]
         return cards
 
-    def remove_batch(self, card_ids: List[str]) -> int:
+    def remove_batch(self, card_ids: list[str]) -> int:
         """Remove a batch of cards from queue.
 
         Args:

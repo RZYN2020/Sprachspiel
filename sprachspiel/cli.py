@@ -7,7 +7,7 @@ from typing import Optional
 import click
 
 from sprachspiel import __version__
-from sprachspiel.config import Config, CONFIG_DIR, DEFAULT_CONFIG_PATH
+from sprachspiel.config import Config
 
 
 @click.group()
@@ -61,8 +61,8 @@ def process_queue(ctx: click.Context) -> None:
     options = ctx.obj
     config = Config(options["config_path"])
 
-    from sprachspiel.core.queue import CardQueue
     from sprachspiel.core.engine import CardEngine
+    from sprachspiel.core.queue import CardQueue
 
     queue = CardQueue(config)
     engine = CardEngine(config)
@@ -94,8 +94,8 @@ def export(ctx: click.Context, output: Optional[str]) -> None:
     options = ctx.obj
     config = Config(options["config_path"])
 
-    from sprachspiel.core.queue import CardQueue
     from sprachspiel.anki.file_export import FileExporter
+    from sprachspiel.core.queue import CardQueue
 
     queue = CardQueue(config)
 

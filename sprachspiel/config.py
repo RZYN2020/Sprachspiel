@@ -1,8 +1,7 @@
 """Configuration management for Sprachspiel."""
 
-import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import yaml
 
@@ -30,7 +29,7 @@ class Config:
             config_path: Path to configuration file. If None, uses default path.
         """
         self.config_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self) -> None:
@@ -40,15 +39,15 @@ class Config:
             return
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 self._config = yaml.safe_load(f) or {}
         except yaml.YAMLError as e:
             raise ConfigValidationError(f"Failed to parse config file: {e}") from e
 
         # Validate loaded configuration
-        self._validate.validate()
+        self._validate()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default configuration.
 
         Returns:

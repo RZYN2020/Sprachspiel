@@ -1,8 +1,7 @@
 """Tests for card data model."""
 
-import pytest
 
-from sprachspiel.core.card import CardData, CardMetadata, Media, AnkiCard
+from sprachspiel.core.card import AnkiCard, CardData, CardMetadata
 
 
 def test_card_data_creation():

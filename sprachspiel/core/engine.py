@@ -1,11 +1,9 @@
 """Card generation engine for Sprachspiel."""
 
 import asyncio
-from pathlib import Path
-from typing import Optional
 
 from sprachspiel.config import Config
-from sprachspiel.core.card import CardData, AnkiCard
+from sprachspiel.core.card import AnkiCard, CardData
 from sprachspiel.core.mapper import FieldMapper
 
 
@@ -27,7 +25,6 @@ class CardEngine:
 
     def _init_anki(self) -> None:
         """Initialize Anki connector."""
-        from sprachspiel.anki.base import BaseAnkiConnector
         from sprachspiel.anki.connect import AnkiConnect
         from sprachspiel.anki.file_export import FileExporter
 
@@ -49,9 +46,9 @@ class CardEngine:
 
     def _init_services(self) -> None:
         """Initialize enhancement services."""
+        from sprachspiel.services.ai import AIService
         from sprachspiel.services.dictionary import DictionaryService
         from sprachspiel.services.tts import TTSService
-        from sprachspiel.services.ai import AIService
 
         # Initialize services (lazy load based on config)
         self.dictionary = DictionaryService(self.config)
@@ -95,17 +92,17 @@ class CardEngine:
                 # Apply results
                 if self.ai.has_function("translate") and results[0]:
                     if not isinstance(results[0], Exception):
-)                        card_data.translation = results[0]
+                        card_data.translation = results[0]
 
                 if self.ai.has_function("example") and results[1]:
                     if not isinstance(results[1], Exception):
-)                        card_data.example = results[1]
+                        card_data.example = results[1]
 
                 # Run custom AI functions
                 for func_name, func_config in self.ai.get_custom_functions().items():
                     result = await self.ai.call_function(func_name, card_data.word)
                     if result and not isinstance(result, Exception):
-)                        card_data.custom_data[func_name] = result
+                        card_data.custom_data[func_name] = result
 
             except Exception as e:
                 print(f"AI enhancement failed: {e}")
@@ -122,7 +119,7 @@ class CardEngine:
         # Map to Anki fields
         anki_card = self.mapper.map_card(card_data)
 
-        return (anki_card
+        return anki_card
 
     def generate_card_sync(self, card_data: CardData) -> AnkiCard:
         """Synchronous wrapper for generate_card.
