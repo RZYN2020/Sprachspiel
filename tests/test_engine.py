@@ -1,10 +1,22 @@
 """Tests for card engine."""
 
+import pytest
 
-from sprachspiel.config import Config
+from sprachspiel.config import QUEUE_DIR, Config
 from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.core.engine import CardEngine
 from sprachspiel.core.queue import CardQueue
+
+
+@pytest.fixture(autouse=True, scope="function")
+def clean_queue_file():
+    """Clean queue file before and after tests."""
+    queue_file = QUEUE_DIR / "queue.json"
+    if queue_file.exists():
+        queue_file.unlink()
+    yield
+    if queue_file.exists():
+        queue_file.unlink()
 
 
 def test_engine_initialization():

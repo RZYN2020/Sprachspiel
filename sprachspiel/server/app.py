@@ -1,6 +1,6 @@
 """FastAPI application for Sprachspiel server."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import fastapi
@@ -387,4 +387,4 @@ def _save_base64_audio(data: str, config: Config) -> Optional[str]:
 
 def _get_datetime() -> datetime:
     """Get current datetime."""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)

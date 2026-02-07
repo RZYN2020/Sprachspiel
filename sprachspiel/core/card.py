@@ -2,7 +2,7 @@
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 
@@ -23,7 +23,7 @@ class CardMetadata:
     source_type: str  # "video", "pdf", "epub", "text", "web", etc.
     source_name: str  # File name, URL, etc.
     position: Optional[str] = None  # Timestamp, page number, line number, etc.
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -109,9 +109,9 @@ class CardData:
                 source_type=metadata_data.get("source_type", "unknown"),
                 source_name=metadata_data.get("source_name", "unknown"),
                 position=metadata_data.get("position"),
-                created_at=datetime.fromisoformat(metadata_data.get("created_at", datetime.utcnow().isoformat()))
+                created_at=datetime.fromisoformat(metadata_data.get("created_at", datetime.now(timezone.utc).isoformat()))
                 if metadata_data.get("created_at")
-                else datetime.utcnow(),
+                else datetime.now(timezone.utc),
             ),
             custom_data=data.get("custom_data", {}),
         )
