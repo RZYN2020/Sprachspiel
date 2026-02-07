@@ -26,20 +26,35 @@ pip install sprachspiel[mpv]
 
 ### Using uv (recommended)
 
-uv is a fast Python package manager and project manager.
+uv is a fast Python package manager.
+
+#### Method 1: Install from PyPI
 
 ```bash
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone the repository
+# Install sprachspiel
+uv pip install sprachspiel
+
+# Optional: install mpv support
+uv pip install sprachspiel[mpv]
+```
+
+#### Method 2: Install from source (development mode)
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone repository
 git clone https://github.com/yourusername/sprachspiel.git
 cd sprachspiel
 
 # Sync dependencies
 uv sync
 
-# Activate the virtual environment
+# Activate virtual environment
 source .venv/bin/activate
 
 # Or use uv to run commands directly
@@ -54,12 +69,12 @@ uv run sprachspiel start
    sprachspiel config anki.mode both
    ```
 
-2. **Start the HTTP server**:
+2. **Start HTTP server**:
    ```bash
    sprachspiel start
    ```
 
-3. **Use the API**:
+3. **Use API**:
    - Send word selections to `http://localhost:8000/api/v1/word`
    - Check queue status at `http://localhost:8000/api/v1/queue/status`
    - Process queue with `POST http://localhost:8000/api/v1/queue/process`
@@ -112,7 +127,7 @@ ai:
     translate:
       prompt: "Translate '${word}' to Chinese. Return only translation."
     example:
-      prompt: "Generate a natural English sentence using '${word}'. Return only the sentence."
+      prompt: "Generate a natural English sentence using '${word}'. The word should appear in context. Return only sentence."
 
 media:
   organization: hierarchical
