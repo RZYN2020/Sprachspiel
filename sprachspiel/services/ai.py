@@ -52,7 +52,7 @@ class AIService:
         }
 
     async def call_function(
-        self, name: str, word: str, **kwargs
+        self, name: str, word: str, **kwargs: Any
     ) -> str | None:
         """Call AI function for word.
 
@@ -118,7 +118,7 @@ class AIService:
             "Content-Type": "application/json",
         }
 
-        data = {
+        data: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 100,
@@ -143,13 +143,13 @@ class AIService:
 
         url = f"{self.base_url}/messages"
 
-        headers = {
+        headers: dict[str, Any] = {
             "x-api-key": self.api_key,
             "Content-Type": "application/json",
             "anthropic-version": "2023-06-01",
         }
 
-        data = {
+        data: dict[str, Any] = {
             "model": self.model,
             "max_tokens": 100,
             "messages": [{"role": "user", "content": prompt}],
@@ -174,12 +174,12 @@ class AIService:
 
         url = f"{self.base_url}/chat/completions"
 
-        headers = {
+        headers: dict[str, Any] = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
 
-        data = {
+        data: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 100,

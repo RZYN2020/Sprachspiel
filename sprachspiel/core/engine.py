@@ -1,6 +1,12 @@
 """Card generation engine for Sprachspiel."""
 
 import asyncio
+from typing import TYPE_CHECKING, Any, Coroutine
+
+if TYPE_CHECKING:
+    from sprachspiel.anki.base import BaseAnkiConnector
+else:
+    BaseAnkiConnector = object  # type: ignore
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
@@ -30,7 +36,7 @@ class CardEngine:
 
         mode = self.config.get("anki.mode")
 
-        self.anki_connectors = []
+        self.anki_connectors: list[BaseAnkiConnector] = []
 
         if mode in ["connect", "both"]:
             self.anki_connect = AnkiConnect(self.config)
@@ -78,7 +84,7 @@ class CardEngine:
         if self.ai.is_configured():
             try:
                 # Run AI functions in parallel
-                ai_tasks = []
+                ai_tasks: list[Coroutine[Any, Any, str | None]] = []
 
                 if self.ai.has_function("translate") and not card_data.translation:
                     ai_tasks.append(self.ai.call_function("translate", card_data.word))
@@ -86,20 +92,20 @@ class CardEngine:
                 if self.ai.has_function("example") and not card_data.example:
                     ai_tasks.append(self.ai.call_function("example", card_data.word))
 
-                # Run all AI tasks
-                results = await asyncio.gather(*ai_tasks, return_exceptions=True)
+                # Run all AI
+                results = await asyncio.gather(*ai_tasks, return_exceptions=True)  # type: ignore[arg-type]
 
                 # Apply results
-                if self.ai.has_function("translate") and results[0]:
-                    if not isinstance(results[0], Exception):
-                        card_data.translation = results[0]
+                if self.ai.has_function("translate") and len(results) > 0 and results[0]:
+                    if not isinstance(results[0], Exception):  # type: ignore[arg-type]
+                        card_data.translation = results[0]  # type: ignore[assignment]
 
-                if self.ai.has_function("example") and results[1]:
-                    if not isinstance(results[1], Exception):
-                        card_data.example = results[1]
+                if self.ai.has_function("example") and len(results) > 1 and results[1]:
+                    if not isinstance(results[1], Exception):  # type: ignore[arg-type]
+                        card_data.example = results[1]  # type: ignore[assignment]
 
                 # Run custom AI functions
-                for func_name, func_config in self.ai.get_custom_functions().items():
+                for func_name in self.ai.get_custom_functions():
                     result = await self.ai.call_function(func_name, card_data.word)
                     if result and not isinstance(result, Exception):
                         card_data.custom_data[func_name] = result
@@ -163,7 +169,7 @@ class CardEngine:
         """
         return asyncio.run(self.push_card(card))
 
-    async def process_queue(self) -> tuple:
+    async def process_queue(self) -> tuple[int, int]:
         """Process all cards in queue.
 
         Returns:
@@ -187,7 +193,7 @@ class CardEngine:
             batch = queue.get_batch(batch_size)
 
             # Enhance and map cards
-            anki_cards = []
+            anki_cards: list[tuple[AnkiCard, str]] = []
             for card_data in batch:
                 anki_card = await self.generate_card(card_data)
                 anki_cards.append((anki_card, card_data.id))
@@ -200,7 +206,7 @@ class CardEngine:
 
         return (success_count, total)
 
-    def process_queue_sync(self) -> tuple:
+    def process_queue_sync(self) -> tuple[int, int]:
         """Synchronous wrapper for process_queue.
 
         Returns:

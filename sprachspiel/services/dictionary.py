@@ -64,7 +64,7 @@ class DictionaryService:
         module_name = dict_config.get("module")
 
         # Custom module support
-        if "." in module_name:
+        if module_name and "." in module_name:
             return await self._lookup_custom(word, dict_config)
 
         # Built-in dictionaries
@@ -94,6 +94,9 @@ class DictionaryService:
         try:
             # Import custom module
             from importlib import import_module
+
+            if not module_name:
+                raise ValueError("Module name is required")
 
             parts = module_name.split(".")
             module = import_module(".".join(parts[:-1]))
@@ -179,7 +182,7 @@ class DictionaryService:
             return {}
 
         url = "https://openapi.youdao.com/api"
-        params = {
+        params: dict[str, Any] = {
             "q": word,
             "from": "auto",
             "to": "zh",

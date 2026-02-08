@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from sprachspiel.anki.base import BaseAnkiConnector
 from sprachspiel.config import Config
@@ -75,15 +75,18 @@ class FileExporter(BaseAnkiConnector):
         Returns:
             Path to generated .apkg file.
         """
+        actual_output_dir: Path
         if output_dir:
-            output_dir = Path(output_dir)
+            actual_output_dir = Path(output_dir)
+        else:
+            actual_output_dir = self.output_dir
 
-        output_dir.mkdir(parents=True, exist_ok=True)
+        actual_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Create timestamped filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         apkg_filename = f"{self.deck_name}_{timestamp}.apkg"
-        apkg_path = output_dir / apkg_filename
+        apkg_path = actual_output_dir / apkg_filename
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -93,7 +96,7 @@ class FileExporter(BaseAnkiConnector):
 
             # Create .apkg file (zip)
             with zipfile.ZipFile(apkg_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                for root, dirs, files in os.walk(temp_path):
+                for root, _, files in os.walk(temp_path):
                     for file in files:
                         file_path = Path(root) / file
                         arcname = file_path.relative_to(temp_path)
@@ -113,7 +116,7 @@ class FileExporter(BaseAnkiConnector):
         media_dir.mkdir(parents=True, exist_ok=True)
 
         # Collect all media files
-        media_files = {}
+        media_files: dict[str, str] = {}
         file_index = 0
 
         for card in cards:
@@ -135,7 +138,7 @@ class FileExporter(BaseAnkiConnector):
                     file_index += 1
 
         # Create deck JSON
-        deck_json = {
+        deck_json: dict[str, Any] = {
             "name": self.deck_name,
             "mid": 1600000000,  # Default model ID
             "fields": list(self._get_field_names(cards)),
@@ -154,9 +157,9 @@ class FileExporter(BaseAnkiConnector):
         }
 
         # Create notes JSON
-        notes = []
+        notes: list[dict[str, Any]] = []
         for i, card in enumerate(cards):
-            note = {
+            note: dict[str, Any] = {
                 "guid": self._generate_guid(i),
                 "mid": 1600000000,
                 "mod": int(datetime.now().timestamp()),
@@ -180,7 +183,7 @@ class FileExporter(BaseAnkiConnector):
             json.dump(notes, f, ensure_ascii=False)
 
         # Create meta.json
-        meta_json = {
+        meta_json: dict[str, Any] = {
             "exported_at": datetime.now().isoformat(),
             "deck_name": self.deck_name,
             "note_count": len(cards),
@@ -191,7 +194,7 @@ class FileExporter(BaseAnkiConnector):
         with open(output_dir / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta_json, f, ensure_ascii=False)
 
-    def _get_field_names(self, cards: list[AnkiCard]) -> set:
+    def _get_field_names(self, cards: list[AnkiCard]) -> set[str]:
         """Get all field names from cards.
 
         Args:
@@ -200,7 +203,7 @@ class FileExporter(BaseAnkiConnector):
         Returns:
             Set of field names.
         """
-        field_names = set()
+        field_names: set[str] = set()
 
         for card in cards:
             field_names.update(card.fields.keys())
@@ -209,7 +212,7 @@ class FileExporter(BaseAnkiConnector):
         standard_fields = {"Front", "Back"}
         field_names.update(standard_fields)
 
-        return list(field_names)
+        return field_names
 
     def _get_front_template(self, cards: list[AnkiCard]) -> str:
         """Get front template from cards.

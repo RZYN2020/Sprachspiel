@@ -65,7 +65,7 @@ class TTSService:
         module_name = provider_config.get("module")
 
         # Custom module support
-        if "." in module_name:
+        if module_name and "." in module_name:
             return await self._synthesize_custom(text, provider_config, voice)
 
         # Built-in providers
@@ -92,6 +92,8 @@ class TTSService:
         from importlib import import_module
 
         module_name = provider_config.get("module")
+        if not module_name:
+            raise ValueError("Module name is required")
 
         parts = module_name.split(".")
         module = import_module(".".join(parts[:-1]))
@@ -128,7 +130,7 @@ class TTSService:
         lang = voice or provider_config.get("voice", "en-US")
 
         url = "https://translate.google.com/translate_tts"
-        params = {
+        params: dict[str, Any] = {
             "client": "tw-ob",
             "q": text,
             "tl": lang,
@@ -147,7 +149,7 @@ class TTSService:
         return str(output_file)
 
     async def _synthesize_azure(
-        self, text: str, provider_config: dict[str, Any], voice: Optional[str] = None
+        self, _text: str, _provider_config: dict[str, Any], _voice: Optional[str] = None
     ) -> str:
         """Synthesize audio using Azure TTS.
 

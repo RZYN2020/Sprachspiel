@@ -1,7 +1,7 @@
 """FastAPI application for Sprachspiel server."""
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
+from typing import Any, Optional
 
 import fastapi
 from fastapi import APIRouter, Depends, HTTPException
@@ -31,7 +31,7 @@ class QueueStatusResponse(BaseModel):
     """Response model for queue status."""
 
     size: int = Field(..., description="Number of cards in queue")
-    cards: list = Field(..., description="List of queued cards (summary)")
+    cards: list[dict[str, Any]] = Field(..., description="List of queued cards (summary)")
 
 
 class CardResponse(BaseModel):
@@ -51,7 +51,7 @@ class ConfigResponse(BaseModel):
 
 
 # API key dependency (simple implementation)
-async def verify_api_key(x_api_key: Optional[str] = None) -> bool:
+async def verify_api_key(_x_api_key: Optional[str] = None) -> bool:
     """Verify API key (placeholder)."""
     # TODO: Implement proper API key verification
     return True
@@ -89,7 +89,7 @@ def create_app(config: Config) -> fastapi.FastAPI:
 
     # Root endpoint
     @app.get("/")
-    def root():
+    def root() -> dict[str, Any]:  # type: ignore[misc]
         """Root endpoint."""
         return {
             "name": "Sprachspiel",
@@ -116,7 +116,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
     queue = CardQueue(config)
     engine = CardEngine(config)
 
-    @router.post("/word", response_model=CardResponse)
+    @router.post("/word", response_model=CardResponse)  # type: ignore[misc]
     async def create_card(
         request: WordRequest, api_key_valid: bool = Depends(verify_api_key)
     ) -> CardResponse:
@@ -161,11 +161,11 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
                 pushed = await engine.push_card(anki_card)
 
                 if pushed:
-                    return CardResponse(success=True, card_id=card_data.id)
+                    return CardResponse(success=True, card_id=card_data.id)  # type: ignore[call-arg]
                 else:
                     return CardResponse(
                         success=False,
-                        message="Failed to push card to Anki",
+                        message="Failed to push card to Anki",  # type: ignore[call-arg]
                     )
             else:
                 # Add to queue
@@ -179,16 +179,18 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
                     success_count, total = await engine.process_queue()
                     return CardResponse(
                         success=True,
-                        message=f"Processed {success_count}/{total} cards",
+                        message=f"Processed {success_count}/{total} cards",  # type: ignore[call-arg]
                     )
 
-                return CardResponse(success=True, card_id=card_data.id)
+                return CardResponse(success=True, card_id=card_data.id)  # type: ignore[call-arg]
 
         except Exception as e:
-            return CardResponse(success=False, message=str(e))
+            return CardResponse(success=False, message=str(e))  # type: ignore[call-arg]
 
-    @router.get("/queue/status", response_model=QueueStatusResponse)
-    async def get_queue_status(api_key_valid: bool = Depends(verify_api_key)) -> QueueStatusResponse:
+    @router.get("/queue/status", response_model=QueueStatusResponse)  # type: ignore[misc]
+    async def get_queue_status(
+        api_key_valid: bool = Depends(verify_api_key)
+    ) -> QueueStatusResponse:
         """Get queue status.
 
         Args:
@@ -201,7 +203,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         cards = queue.get_all()
-        card_summaries = [
+        card_summaries: list[dict[str, Any]] = [
             {
                 "id": card.id,
                 "word": card.word,
@@ -212,8 +214,10 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
 
         return QueueStatusResponse(size=queue.size(), cards=card_summaries)
 
-    @router.post("/queue/process", response_model=dict)
-    async def process_queue(api_key_valid: bool = Depends(verify_api_key)) -> dict:
+    @router.post("/queue/process")  # type: ignore[misc]
+    async def process_queue(
+        api_key_valid: bool = Depends(verify_api_key)
+    ) -> dict[str, Any]:
         """Process all cards in queue.
 
         Args:
@@ -235,8 +239,10 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             "message": f"Processed {success_count}/{total} cards",
         }
 
-    @router.get("/queue/clear", response_model=dict)
-    async def clear_queue(api_key_valid: bool = Depends(verify_api_key)) -> dict:
+    @router.get("/queue/clear")  # type: ignore[misc]
+    async def clear_queue(
+        api_key_valid: bool = Depends(verify_api_key)
+    ) -> dict[str, Any]:
         """Clear all cards from queue.
 
         Args:
@@ -256,8 +262,10 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             "message": f"Cleared {size} cards from queue",
         }
 
-    @router.get("/config", response_model=ConfigResponse)
-    async def get_config(api_key_valid: bool = Depends(verify_api_key)) -> ConfigResponse:
+    @router.get("/config", response_model=ConfigResponse)  # type: ignore[misc]
+    async def get_config(
+        api_key_valid: bool = Depends(verify_api_key)
+    ) -> ConfigResponse:
         """Get current configuration.
 
         Args:
@@ -275,8 +283,10 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             queue_size=queue.size(),
         )
 
-    @router.post("/config/reload", response_model=dict)
-    async def reload_config(api_key_valid: bool = Depends(verify_api_key)) -> dict:
+    @router.post("/config/reload")  # type: ignore[misc]
+    async def reload_config(
+        api_key_valid: bool = Depends(verify_api_key)
+    ) -> dict[str, Any]:
         """Reload configuration from file.
 
         Args:
@@ -312,7 +322,7 @@ def _save_base64_image(data: str, config: Config) -> Optional[str]:
     try:
         # Handle data URL scheme
         if "," in data:
-            header, image_data = data.split(",", 1)
+            _header, image_data = data.split(",", 1)
         else:
             image_data = data
 
@@ -360,7 +370,7 @@ def _save_base64_audio(data: str, config: Config) -> Optional[str]:
 
         # Handle data URL scheme
         if "," in data:
-            header, audio_data = data.split(",", 1)
+            _header, audio_data = data.split(",", 1)
         else:
             audio_data = data
 
@@ -383,8 +393,3 @@ def _save_base64_audio(data: str, config: Config) -> Optional[str]:
         return str(filepath)
     except Exception:
         return None
-
-
-def _get_datetime() -> datetime:
-    """Get current datetime."""
-    return datetime.now(timezone.utc)

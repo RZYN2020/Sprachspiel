@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
+from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
 
 
@@ -21,16 +22,16 @@ class FieldMapper:
     # Pattern for template variables: ${variable_name}
     VAR_PATTERN = re.compile(r"\$\{([^}]+)\}")
 
-    def __init__(self, config):
+    def __init__(self, config: Config):
         """Initialize field mapper.
 
         Args:
             config: Configuration instance.
         """
         self.config = config
-        self.field_mapping = config.get("anki.field_mapping", {})
-        self.deck_name = config.get("anki.file.deck_name", "Default")
-        self.model_name = config.get("anki.file.model_name", "Basic")
+        self.field_mapping: dict[str, str] = config.get("anki.field_mapping", {})
+        self.deck_name: str = config.get("anki.file.deck_name", "Default")
+        self.model_name: str = config.get("anki.file.model_name", "Basic")
 
     def map_card(self, card: CardData) -> AnkiCard:
         """Map card data to Anki card.
@@ -45,7 +46,7 @@ class FieldMapper:
         variables = self._build_variable_context(card)
 
         # Map each field
-        fields = {}
+        fields: dict[str, str] = {}
         for field_name, template in self.field_mapping.items():
             try:
                 fields[field_name] = self._substitute_template(template, variables)
@@ -54,8 +55,8 @@ class FieldMapper:
                 print(f"Warning: Template error for field {field_name}: {e}")
 
         # Collect media files
-        audio_files = []
-        image_files = []
+        audio_files: list[str] = []
+        image_files: list[str] = []
 
         if card.media.audio_word:
             audio_files.append(card.media.audio_word)
@@ -129,33 +130,36 @@ class FieldMapper:
         Raises:
             TemplateError: If template is malformed.
         """
-        if not isinstance(template, str):
-            return str(template) if template else ""
+        if template:
+            return str(template)
 
-        def replace_var(match):
-            var_name = match.group(1)
+        def replace_var(match: re.Match[str]) -> str:
+            var_name: str = match.group(1)
 
             # Handle nested variable access (e.g., ${media.screenshot})
-            parts = var_name.split(".")
-            value = variables
+            parts: list[str] = var_name.split(".")
+            value: Any = variables
 
             for part in parts:
                 if isinstance(value, dict):
-                    value = value.get(part, "")
-                else:
-                    value = getattr(value, part, "")
+                    value = value.get(part, "")  # type: ignore[index]
                     if value is None:
                         value = ""
-                    break
+                        break
+                else:
+                    value = getattr(value, part, "")  # type: ignore[arg-type]
+                    if value is None:
+                        value = ""
+                        break
 
-            return str(value)
+            return str(value)  # type: ignore[arg-type]
 
         try:
             return self.VAR_PATTERN.sub(replace_var, template)
         except Exception as e:
             raise TemplateError(f"Failed to substitute template: {e}", template) from e
 
-    def _build_tags(self, card: CardData) -> list:
+    def _build_tags(self, card: CardData) -> list[str]:
         """Build tags for card.
 
         Args:

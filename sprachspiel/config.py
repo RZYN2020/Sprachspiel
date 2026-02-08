@@ -14,7 +14,7 @@ QUEUE_DIR = CONFIG_DIR / "queue"
 class ConfigValidationError(Exception):
     """Raised when configuration validation fails."""
 
-    def __init__(self, message: str, errors: Optional[list] = None):
+    def __init__(self, message: str, errors: Optional[list[str]] = None):
         super().__init__(message)
         self.errors = errors or []
 
@@ -99,7 +99,7 @@ class Config:
         Raises:
             ConfigValidationError: If configuration is invalid.
         """
-        errors = []
+        errors: list[str] = []
 
         # Validate Anki settings
         self._validate_anki_settings(errors)
@@ -113,7 +113,7 @@ class Config:
         if errors:
             raise ConfigValidationError("Configuration validation failed", errors)
 
-    def _validate_anki_settings(self, errors: list) -> None:
+    def _validate_anki_settings(self, errors: list[str]) -> None:
         """Validate Anki connection settings."""
         anki_config = self._config.get("anki", {})
         mode = anki_config.get("mode")
@@ -135,7 +135,7 @@ class Config:
             if not isinstance(file_config.get("deck_name"), str):
                 errors.append("anki.file.deck_name must be a string")
 
-    def _validate_card_generation_settings(self, errors: list) -> None:
+    def _validate_card_generation_settings(self, errors: list[str]) -> None:
         """Validate card generation settings."""
         card_config = self._config.get("card_generation", {})
         mode = card_config.get("mode")
@@ -143,7 +143,7 @@ class Config:
         if mode not in ["real-time", "queue"]:
             errors.append(f"Invalid card generation mode: {mode}. Must be 'real-time' or 'queue'")
 
-    def _validate_media_settings(self, errors: list) -> None:
+    def _validate_media_settings(self, errors: list[str]) -> None:
         """Validate media settings."""
         media_config = self._config.get("media", {})
         organization = media_config.get("organization")

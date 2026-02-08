@@ -1,7 +1,7 @@
 """Reader data source for PDF/EPUB/Text files."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
@@ -11,7 +11,7 @@ from sprachspiel.sources.base import BaseDataSource
 class ReaderDataSource(BaseDataSource):
     """Data source for reading files."""
 
-    def __init__(self, config: Config, source_config: dict):
+    def __init__(self, config: Config, source_config: dict[str, Any]):
         """Initialize reader data source.
 
         Args:
@@ -19,7 +19,7 @@ class ReaderDataSource(BaseDataSource):
             source_config: Source-specific configuration.
         """
         self.config = config
-        self.file_path = Path(source_config.get("file_path"))
+        self.file_path = Path(source_config.get("file_path", ""))
         self.file_type = self._detect_file_type()
 
         # Load file content
@@ -75,17 +75,17 @@ class ReaderDataSource(BaseDataSource):
             EPUB text content.
         """
         try:
-            import ebooklib
+            import ebooklib  # type: ignore
 
-            book = ebooklib.EPUB(str(self.file_path))
-            text = ""
+            book = ebooklib.EPUB(str(self.file_path))  # type: ignore
+            text: str = ""
 
-            for item in book.get_items():
-                if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                    content = book.get_item(item.get_name()).get_content()
-                    text += content.decode("utf-8", errors="ignore") + "\n"
+            for item in book.get_items():  # type: ignore
+                if item.get_type() == ebooklib.ITEM_DOCUMENT:  # type: ignore
+                    content = book.get_item(item.get_name()).get_content()  # type: ignore
+                    text += content.decode("utf-8", errors="ignore") + "\n"  # type: ignore
 
-            return text
+            return text  # type: ignore
         except ImportError:
             raise RuntimeError("ebooklib required for EPUB files. Install with: pip install ebooklib")
 
@@ -98,7 +98,7 @@ class ReaderDataSource(BaseDataSource):
         with open(self.file_path, encoding="utf-8") as f:
             return f.read()
 
-    def _build_line_map(self) -> dict:
+    def _build_line_map(self) -> dict[int, str]:
         """Build line number to line content map.
 
         Returns:
@@ -142,7 +142,7 @@ class ReaderDataSource(BaseDataSource):
         """
         word_lower = word.lower()
 
-        for line_num, line in self.line_map.items():
+        for _, line in self.line_map.items():
             if word_lower in line.lower():
                 return line.strip()
 

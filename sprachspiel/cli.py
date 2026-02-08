@@ -77,11 +77,12 @@ def process_queue(ctx: click.Context) -> None:
     success_count = 0
     for card_data in pending:
         try:
-            engine.generate_card(card_data)
-            queue.remove(card_data["id"])
+            anki_card = engine.generate_card_sync(card_data)
+            _ = anki_card  # Process the card
+            queue.remove(card_data.id)
             success_count += 1
         except Exception as e:
-            click.echo(f"Error processing card {card_data.get('word', 'unknown')}: {e}", err=True)
+            click.echo(f"Error processing card {card_data.word}: {e}", err=True)
 
     click.echo(f"Processed {success_count}/{len(pending)} cards successfully.")
 
@@ -91,13 +92,17 @@ def process_queue(ctx: click.Context) -> None:
 @click.pass_context
 def export(ctx: click.Context, output: Optional[str]) -> None:
     """Export all queued cards to an .apkg file."""
+    import asyncio
+
     options = ctx.obj
     config = Config(options["config_path"])
 
     from sprachspiel.anki.file_export import FileExporter
+    from sprachspiel.core.engine import CardEngine
     from sprachspiel.core.queue import CardQueue
 
     queue = CardQueue(config)
+    engine = CardEngine(config)
 
     if queue.is_empty():
         click.echo("Queue is empty. Nothing to export.")
@@ -109,8 +114,15 @@ def export(ctx: click.Context, output: Optional[str]) -> None:
 
     click.echo(f"Exporting {len(cards)} cards to {output_dir}")
 
+    # Convert CardData to AnkiCard
+    from sprachspiel.core.card import AnkiCard
+    anki_cards: list[AnkiCard] = []
+    for card_data in cards:
+        anki_card = asyncio.run(engine.generate_card(card_data))
+        anki_cards.append(anki_card)
+
     exporter = FileExporter(config)
-    apkg_path = exporter.export_cards(cards, output_dir)
+    apkg_path = exporter.export_cards(anki_cards, output_dir)
 
     click.echo(f"Exported to {apkg_path}")
 

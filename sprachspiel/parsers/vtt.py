@@ -1,6 +1,7 @@
 """VTT (WebVTT) subtitle parser."""
 
 import re
+from datetime import timedelta
 
 from sprachspiel.parsers.subtitle_base import BaseSubtitleParser, SubtitleEntry
 
@@ -25,7 +26,7 @@ class VTTParser(BaseSubtitleParser):
         Returns:
             List of subtitle entries in chronological order.
         """
-        entries = []
+        entries: list[SubtitleEntry] = []
         lines = content.splitlines()
         index = 0
 
@@ -44,7 +45,7 @@ class VTTParser(BaseSubtitleParser):
                 end = self.parse_timestamp(end_str)
 
                 # Collect text lines
-                text_lines = []
+                text_lines: list[str] = []
                 j = i + 1
                 while j < len(lines) and not lines[j].strip().startswith("-->"):
                     text_line = lines[j].strip()
@@ -66,8 +67,8 @@ class VTTParser(BaseSubtitleParser):
         return entries
 
     def find_entry_at_time(
-        self, entries: list[SubtitleEntry], timestamp
-    ) -> list[SubtitleEntry] | None:
+        self, entries: list[SubtitleEntry], timestamp: timedelta
+    ) -> SubtitleEntry | None:
         """Find subtitle entry at given timestamp.
 
         Args:

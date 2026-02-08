@@ -28,7 +28,7 @@ class ASSParser(BaseSubtitleParser):
         Returns:
             List of subtitle entries in chronological order.
         """
-        entries = []
+        entries: list[SubtitleEntry] = []
         lines = content.splitlines()
         index = 0
 
@@ -52,8 +52,8 @@ class ASSParser(BaseSubtitleParser):
         return entries
 
     def find_entry_at_time(
-        self, entries: list[SubtitleEntry], timestamp
-    ) -> list[SubtitleEntry] | None:
+        self, entries: list[SubtitleEntry], timestamp: timedelta
+    ) -> SubtitleEntry | None:
         """Find subtitle entry at given timestamp.
 
         Args:

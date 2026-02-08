@@ -1,6 +1,7 @@
 """AnkiConnect connector for Sprachspiel."""
 
 import time
+from typing import Any, cast
 
 import requests
 
@@ -25,7 +26,7 @@ class AnkiConnect(BaseAnkiConnector):
         self.url = f"http://{self.host}:{self.port}"
         self.version = 6  # AnkiConnect API version
 
-    def _request(self, action: str, params: dict = None, retry: int = 3) -> dict:
+    def _request(self, action: str, params: dict[str, Any] | None = None, retry: int = 3) -> dict[str, Any]:
         """Make request to AnkiConnect.
 
         Args:
@@ -39,7 +40,7 @@ class AnkiConnect(BaseAnkiConnector):
         Raises:
             requests.RequestException: If request fails.
         """
-        request_data = {
+        request_data: dict[str, Any] = {
             "action": action,
             "version": self.version,
         }
@@ -94,7 +95,7 @@ class AnkiConnect(BaseAnkiConnector):
             Exception: If note creation fails.
         """
         # Build note parameters
-        params = {
+        params: dict[str, Any] = {
             "note": {
                 "deckName": card.deck_name,
                 "modelName": card.model_name,
@@ -136,10 +137,10 @@ class AnkiConnect(BaseAnkiConnector):
             List of note IDs for successful additions.
         """
         # Build notes parameters
-        notes = []
+        notes: list[dict[str, Any]] = []
 
         for card in cards:
-            note = {
+            note: dict[str, Any] = {
                 "deckName": card.deck_name,
                 "modelName": card.model_name,
                 "fields": card.fields,
@@ -148,12 +149,13 @@ class AnkiConnect(BaseAnkiConnector):
             }
             notes.append(note)
 
-        params = {"notes": notes}
+        params: dict[str, Any] = {"notes": notes}
 
         result = self._request("addNotes", params)
+        add_notes_result: list[int | None] = cast(list[int | None], result)
 
         # Return successful note IDs (non-None values)
-        return [str(note_id) for note_id in result if note_id is not None]
+        return [str(note_id) for note_id in add_notes_result if note_id is not None]
 
     def get_deck_names(self) -> list[str]:
         """Get list of deck names.
@@ -161,7 +163,8 @@ class AnkiConnect(BaseAnkiConnector):
         Returns:
             List of deck names.
         """
-        return self._request("deckNames")
+        result = self._request("deckNames")
+        return cast(list[str], result)
 
     def get_model_names(self) -> list[str]:
         """Get list of model names.
@@ -169,7 +172,8 @@ class AnkiConnect(BaseAnkiConnector):
         Returns:
             List of model names.
         """
-        return self._request("modelNames")
+        result = self._request("modelNames")
+        return cast(list[str], result)
 
     def create_deck(self, deck_name: str) -> bool:
         """Create a new deck.
@@ -197,7 +201,7 @@ class AnkiConnect(BaseAnkiConnector):
             True if successful.
         """
         try:
-            params = {
+            params: dict[str, Any] = {
                 "modelName": model_name,
                 "inOrderFields": fields,
                 "sortf": True,
