@@ -1,7 +1,6 @@
 """File import data source for CSV and text files."""
 
 from pathlib import Path
-from typing import Optional
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
@@ -19,7 +18,10 @@ class FileImportSource(BaseDataSource):
             source_config: Source-specific configuration.
         """
         self.config = config
-        self.file_path = Path(source_config.get("path"))
+        path_value = source_config.get("path")
+        if path_value is None:
+            raise ValueError("path is required")
+        self.file_path = Path(path_value)
         self.import_type = source_config.get("type", "text_file")
 
         # Load import data
@@ -96,7 +98,7 @@ class FileImportSource(BaseDataSource):
 
         return data
 
-    def get_card_data(self, word: str, context: Optional[str] = None) -> CardData:
+    def get_card_data(self, word: str, context: str | None = None) -> CardData:
         """Get card data for selected word.
 
         Args:

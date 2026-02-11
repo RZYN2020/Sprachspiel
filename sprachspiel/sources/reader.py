@@ -1,7 +1,7 @@
 """Reader data source for PDF/EPUB/Text files."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
@@ -107,7 +107,7 @@ class ReaderDataSource(BaseDataSource):
         lines = self.content.splitlines()
         return {i + 1: line for i, line in enumerate(lines)}
 
-    def get_card_data(self, word: str, context: Optional[str] = None) -> CardData:
+    def get_card_data(self, word: str, context: str | None = None) -> CardData:
         """Get card data for selected word.
 
         Args:
@@ -131,7 +131,7 @@ class ReaderDataSource(BaseDataSource):
             ),
         )
 
-    def _find_context_for_word(self, word: str) -> Optional[str]:
+    def _find_context_for_word(self, word: str) -> str | None:
         """Find context line containing word.
 
         Args:
@@ -148,7 +148,7 @@ class ReaderDataSource(BaseDataSource):
 
         return None
 
-    def _find_line_number(self, word: str) -> Optional[str]:
+    def _find_line_number(self, word: str) -> str | None:
         """Find line number containing word.
 
         Args:

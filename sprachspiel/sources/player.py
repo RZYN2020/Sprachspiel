@@ -1,13 +1,18 @@
 """Player data source for video/mpv integration."""
 
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sprachspiel.parsers.subtitle_base import BaseSubtitleParser, SubtitleEntry
+else:
+    BaseSubtitleParser = object  # type: ignore
+    SubtitleEntry = object  # type: ignore
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.parsers.ass import ASSParser
 from sprachspiel.parsers.srt import SRTParser
-from sprachspiel.parsers.subtitle_base import BaseSubtitleParser
 from sprachspiel.parsers.vtt import VTTParser
 from sprachspiel.sources.base import BaseDataSource
 
@@ -23,8 +28,12 @@ class PlayerDataSource(BaseDataSource):
             source_config: Source-specific configuration.
         """
         self.config = config
-        self.video_path = Path(source_config.get("video_path"))
-        self.subtitle_path = Path(source_config.get("subtitle_path"))
+        video_path = source_config.get("video_path")
+        subtitle_path = source_config.get("subtitle_path")
+        if video_path is None or subtitle_path is None:
+            raise ValueError("video_path and subtitle_path are required")
+        self.video_path = Path(video_path)
+        self.subtitle_path = Path(subtitle_path)
         self.format = source_config.get("subtitle_format", "srt")
 
         # Load subtitle parser
@@ -47,7 +56,7 @@ class PlayerDataSource(BaseDataSource):
         }
 
         parser_class = parsers.get(format.lower(), SRTParser)
-        return parser_class()
+        return parser_class()  # type: ignore[abstract, misc]
 
     def _load_subtitles(self) -> list:
         """Load and parse subtitle file.
@@ -61,9 +70,9 @@ class PlayerDataSource(BaseDataSource):
         with open(self.subtitle_path, encoding="utf-8") as f:
             content = f.read()
 
-        return self.parser.parse(content)
+        return self.parser.parse(content)  # type: ignore[return-value]
 
-    def get_card_data(self, word: str, context: Optional[str] = None) -> CardData:
+    def get_card_data(self, word: str, context: str | None = None) -> CardData:
         """Get card data for selected word.
 
         Args:
@@ -87,7 +96,7 @@ class PlayerDataSource(BaseDataSource):
             ),
         )
 
-    def _find_context_for_word(self, word: str) -> Optional[str]:
+    def _find_context_for_word(self, word: str) -> str | None:
         """Find context sentence containing word.
 
         Args:
@@ -98,9 +107,9 @@ class PlayerDataSource(BaseDataSource):
         """
         word_lower = word.lower()
 
-        for entry in self.entries:
-            if word_lower in entry.text.lower():
-                return self.parser.extract_sentence(entry.text)
+        for entry in self.entries:  # type: ignore[attr-defined]
+            if word_lower in entry.text.lower():  # type: ignore[attr-defined]
+                return self.parser.extract_sentence(entry.text)  # type: ignore[attr-defined]
 
         return None
 

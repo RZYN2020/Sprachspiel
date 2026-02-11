@@ -127,8 +127,8 @@ class AIService:
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
 
-        result = response.json()
-        return result["choices"][0]["message"]["content"].strip()
+        result: dict[str, Any] = response.json()
+        return str(result["choices"][0]["message"]["content"]).strip()
 
     async def _call_anthropic(self, prompt: str) -> str:
         """Call Anthropic API.
@@ -158,8 +158,8 @@ class AIService:
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
 
-        result = response.json()
-        return result["content"][0]["text"].strip()
+        result: dict[str, Any] = response.json()
+        return str(result["content"][0]["text"]).strip()
 
     async def _call_custom_endpoint(self, prompt: str) -> str:
         """Call custom endpoint (OpenAI-compatible format).
@@ -188,5 +188,5 @@ class AIService:
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
 
-        result = response.json()
-        return result["choices"][0]["message"]["content"].strip()
+        result: dict[str, Any] = response.json()
+        return str(result["choices"][0]["message"]["content"]).strip()

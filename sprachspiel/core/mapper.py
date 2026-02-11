@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
@@ -11,7 +11,7 @@ from sprachspiel.core.card import AnkiCard, CardData
 class TemplateError(Exception):
     """Raised when template variable is malformed."""
 
-    def __init__(self, message: str, template: Optional[str] = None):
+    def __init__(self, message: str, template: str | None = None):
         super().__init__(message)
         self.template = template
 

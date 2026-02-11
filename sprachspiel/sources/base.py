@@ -1,7 +1,6 @@
 """Base data source interface."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from sprachspiel.core.card import CardData
 
@@ -10,7 +9,7 @@ class BaseDataSource(ABC):
     """Base class for data sources."""
 
     @abstractmethod
-    def get_card_data(self, word: str, context: Optional[str] = None) -> CardData:
+    def get_card_data(self, word: str, context: str | None = None) -> CardData:
         """Get card data for selected word.
 
         Args:

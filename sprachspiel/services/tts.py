@@ -1,7 +1,7 @@
 """Text-to-Speech service for audio generation."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from sprachspiel.config import Config
 
@@ -28,7 +28,7 @@ class TTSService:
         """
         return len(self.tts_providers) > 0
 
-    async def synthesize(self, text: str, voice: Optional[str] = None) -> str:
+    async def synthesize(self, text: str, voice: str | None = None) -> str:
         """Synthesize audio for text.
 
         Args:
@@ -50,7 +50,7 @@ class TTSService:
         raise RuntimeError("All TTS providers failed")
 
     async def _synthesize_provider(
-        self, text: str, provider_config: dict[str, Any], voice: Optional[str]
+        self, text: str, provider_config: dict[str, Any], voice: str | None
     ) -> str:
         """Synthesize audio using specific provider.
 
@@ -77,7 +77,7 @@ class TTSService:
         raise RuntimeError(f"Unknown TTS provider: {module_name}")
 
     async def _synthesize_custom(
-        self, text: str, provider_config: dict[str, Any], voice: Optional[str]
+        self, text: str, provider_config: dict[str, Any], voice: str | None
     ) -> str:
         """Synthesize audio using custom TTS module.
 
@@ -112,7 +112,7 @@ class TTSService:
         return str(output_file)
 
     async def _synthesize_google(
-        self, text: str, provider_config: dict[str, Any], voice: Optional[str] = None
+        self, text: str, provider_config: dict[str, Any], voice: str | None = None
     ) -> str:
         """Synthesize audio using Google Translate TTS.
 
@@ -149,7 +149,7 @@ class TTSService:
         return str(output_file)
 
     async def _synthesize_azure(
-        self, _text: str, _provider_config: dict[str, Any], _voice: Optional[str] = None
+        self, _text: str, _provider_config: dict[str, Any], _voice: str | None = None
     ) -> str:
         """Synthesize audio using Azure TTS.
 
@@ -169,7 +169,7 @@ class TTSService:
 
     async def synthesize_context(
         self, text: str, max_length: int = 200
-    ) -> Optional[str]:
+    ) -> str | None:
         """Synthesize audio for context text (truncated).
 
         Args:

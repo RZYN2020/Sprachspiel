@@ -2,7 +2,6 @@
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -16,7 +15,7 @@ from sprachspiel.config import Config
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.option("--debug", is_flag=True, help="Enable debug output")
 @click.pass_context
-def cli(ctx: click.Context, config: Optional[str], verbose: bool, debug: bool) -> None:
+def cli(ctx: click.Context, config: str | None, verbose: bool, debug: bool) -> None:
     """Sprachspiel - Anki Card Card Generation Assistant.
 
     A cross-platform tool for language learners to efficiently create Anki vocabulary cards
@@ -90,7 +89,7 @@ def process_queue(ctx: click.Context) -> None:
 @cli.command()
 @click.option("--output", "-o", type=click.Path(), help="Output directory for .apkg file")
 @click.pass_context
-def export(ctx: click.Context, output: Optional[str]) -> None:
+def export(ctx: click.Context, output: str | None) -> None:
     """Export all queued cards to an .apkg file."""
     import asyncio
 
@@ -159,7 +158,7 @@ def status(ctx: click.Context) -> None:
 @click.argument("key")
 @click.argument("value", required=False)
 @click.pass_context
-def config_cmd(ctx: click.Context, key: str, value: Optional[str]) -> None:
+def config_cmd(ctx: click.Context, key: str, value: str | None) -> None:
     """Get or set configuration values.
 
     Usage:

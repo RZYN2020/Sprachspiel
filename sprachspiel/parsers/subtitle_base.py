@@ -3,7 +3,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Optional
 
 
 @dataclass
@@ -32,7 +31,7 @@ class BaseSubtitleParser(ABC):
         pass
 
     @abstractmethod
-    def find_entry_at_time(self, entries: list[SubtitleEntry], timestamp: timedelta) -> Optional[SubtitleEntry]:
+    def find_entry_at_time(self, entries: list[SubtitleEntry], timestamp: timedelta) -> SubtitleEntry | None:
         """Find subtitle entry at given timestamp.
 
         Args:
@@ -72,8 +71,8 @@ class BaseSubtitleParser(ABC):
         # Replace common separators
         timestamp_str = timestamp_str.replace(",", ".").replace(".", ":")
 
-        parts = timestamp_str.split(":")
-        parts = [int(p) for p in parts]
+        parts_str = timestamp_str.split(":")
+        parts: list[int] = [int(p) for p in parts_str]
 
         if len(parts) == 4:
             # Hours, minutes, seconds, milliseconds

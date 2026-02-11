@@ -1,7 +1,7 @@
 """Configuration management for Sprachspiel."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -14,7 +14,7 @@ QUEUE_DIR = CONFIG_DIR / "queue"
 class ConfigValidationError(Exception):
     """Raised when configuration validation fails."""
 
-    def __init__(self, message: str, errors: Optional[list[str]] = None):
+    def __init__(self, message: str, errors: list[str] | None = None):
         super().__init__(message)
         self.errors = errors or []
 
@@ -22,7 +22,7 @@ class ConfigValidationError(Exception):
 class Config:
     """Configuration manager for Sprachspiel."""
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """Initialize configuration manager.
 
         Args:
@@ -166,7 +166,7 @@ class Config:
 
         for k in keys:
             if isinstance(value, dict):
-                value = value.get(k)
+                value = value.get(k)  # type: ignore[assignment]
             else:
                 return default
 

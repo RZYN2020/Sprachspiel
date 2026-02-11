@@ -8,19 +8,14 @@ version = "0.1.0"
 description = "A cross-platform Anki card generation assistant for language learners"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Eka", email = "zhaoyzzz@outlook.com"},
 ]
 keywords = ["anki", "language-learning", "vocabulary", "flashcards"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Education",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Topic :: Education",
@@ -69,11 +64,11 @@ exclude = ["openspec*", "tests*"]
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py313"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py313"
 lint.select = ["E", "F", "I", "N", "W", "UP"]
 lint.ignore = ["E501"]
 
@@ -85,7 +80,7 @@ python_functions = ["test_*"]
 asyncio_mode = "auto"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

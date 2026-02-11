@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from sprachspiel.anki.base import BaseAnkiConnector
 from sprachspiel.config import Config
@@ -65,7 +65,7 @@ class FileExporter(BaseAnkiConnector):
             "Batch note export not supported. Use export_cards() for export."
         )
 
-    def export_cards(self, cards: list[AnkiCard], output_dir: Optional[Path] = None) -> Path:
+    def export_cards(self, cards: list[AnkiCard], output_dir: Path | None = None) -> Path:
         """Export cards to as .apkg file.
 
         Args:

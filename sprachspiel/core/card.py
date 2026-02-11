@@ -2,18 +2,18 @@
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
 class Media:
     """Media resources attached to a card."""
 
-    screenshot: Optional[str] = None  # Path to screenshot image
-    audio_word: Optional[str] = None  # Path to TTS audio for word
-    audio_context: Optional[str] = None  # Path to audio for context (original or TTS)
-    video_segment: Optional[str] = None  # Path to video clip (rarely used)
+    screenshot: str | None = None  # Path to screenshot image
+    audio_word: str | None = None  # Path to TTS audio for word
+    audio_context: str | None = None  # Path to audio for context (original or TTS)
+    video_segment: str | None = None  # Path to video clip (rarely used)
 
 
 @dataclass
@@ -22,8 +22,8 @@ class CardMetadata:
 
     source_type: str  # "video", "pdf", "epub", "text", "web", etc.
     source_name: str  # File name, URL, etc.
-    position: Optional[str] = None  # Timestamp, page number, line number, etc.
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    position: str | None = None  # Timestamp, page number, line number, etc.
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -35,15 +35,15 @@ class CardData:
     context: str
 
     # Enhanced data (populated by enhancement services)
-    translation: Optional[str] = None
-    definition: Optional[str] = None
-    example: Optional[str] = None
+    translation: str | None = None
+    definition: str | None = None
+    example: str | None = None
 
     # Media resources
     media: Media = field(default_factory=Media)
 
     # Metadata
-    metadata: CardMetadata = field(default_factory=CardMetadata)
+    metadata: CardMetadata = field(default_factory=lambda: CardMetadata(source_type="unknown", source_name="unknown"))
 
     # Custom data (from AI functions, etc.)
     custom_data: dict[str, Any] = field(default_factory=dict)
@@ -109,9 +109,9 @@ class CardData:
                 source_type=metadata_data.get("source_type", "unknown"),
                 source_name=metadata_data.get("source_name", "unknown"),
                 position=metadata_data.get("position"),
-                created_at=datetime.fromisoformat(metadata_data.get("created_at", datetime.now(timezone.utc).isoformat()))
+                created_at=datetime.fromisoformat(metadata_data.get("created_at", datetime.now(UTC).isoformat()))
                 if metadata_data.get("created_at")
-                else datetime.now(timezone.utc),
+                else datetime.now(UTC),
             ),
             custom_data=data.get("custom_data", {}),
         )

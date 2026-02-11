@@ -1,12 +1,17 @@
 """Card generation engine for Sprachspiel."""
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Coroutine
+from collections.abc import Coroutine
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from sprachspiel.anki.base import BaseAnkiConnector
+    from sprachspiel.anki.connect import AnkiConnect
+    from sprachspiel.anki.file_export import FileExporter
 else:
     BaseAnkiConnector = object  # type: ignore
+    AnkiConnect = object  # type: ignore
+    FileExporter = object  # type: ignore
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
@@ -37,18 +42,16 @@ class CardEngine:
         mode = self.config.get("anki.mode")
 
         self.anki_connectors: list[BaseAnkiConnector] = []
+        self.anki_connect: AnkiConnect | None = None
+        self.file_exporter: FileExporter | None = None
 
         if mode in ["connect", "both"]:
             self.anki_connect = AnkiConnect(self.config)
             self.anki_connectors.append(self.anki_connect)
-        else:
-            self.anki_connect = None
 
         if mode in ["file", "both"]:
             self.file_exporter = FileExporter(self.config)
             self.anki_connectors.append(self.file_exporter)
-        else:
-            self.file_exporter = None
 
     def _init_services(self) -> None:
         """Initialize enhancement services."""
@@ -86,10 +89,10 @@ class CardEngine:
                 # Run AI functions in parallel
                 ai_tasks: list[Coroutine[Any, Any, str | None]] = []
 
-                if self.ai.has_function("translate") and not card_data.translation:
+                if self.ai.has_function("translate") and not (card_data.translation):
                     ai_tasks.append(self.ai.call_function("translate", card_data.word))
 
-                if self.ai.has_function("example") and not card_data.example:
+                if self.ai.has_function("example") and not (card_data.example):
                     ai_tasks.append(self.ai.call_function("example", card_data.word))
 
                 # Run all AI

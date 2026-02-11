@@ -71,7 +71,7 @@ class AnkiConnect(BaseAnkiConnector):
                     if error is not None:
                         raise RuntimeError(f"AnkiConnect error: {error}")
 
-                return data[1]
+                return cast(dict[str, Any], data[1])
 
             except requests.RequestException as e:
                 last_error = e

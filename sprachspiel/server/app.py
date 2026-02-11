@@ -1,7 +1,7 @@
 """FastAPI application for Sprachspiel server."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import fastapi
 from fastapi import APIRouter, Depends, HTTPException
@@ -19,12 +19,12 @@ class WordRequest(BaseModel):
     """Request model for word submission."""
 
     word: str = Field(..., description="Word or phrase to create card for")
-    context: Optional[str] = Field(None, description="Context sentence or text")
-    source_type: Optional[str] = Field(None, description="Source type (video, pdf, epub, text, web)")
-    source_name: Optional[str] = Field(None, description="Source file name or URL")
-    position: Optional[str] = Field(None, description="Position (timestamp, page, line)")
-    screenshot: Optional[str] = Field(None, description="Base64 encoded screenshot")
-    audio: Optional[str] = Field(None, description="Path or base64 encoded audio")
+    context: str | None = Field(None, description="Context sentence or text")
+    source_type: str | None = Field(None, description="Source type (video, pdf, epub, text, web)")
+    source_name: str | None = Field(None, description="Source file name or URL")
+    position: str | None = Field(None, description="Position (timestamp, page, line)")
+    screenshot: str | None = Field(None, description="Base64 encoded screenshot")
+    audio: str | None = Field(None, description="Path or base64 encoded audio")
 
 
 class QueueStatusResponse(BaseModel):
@@ -38,8 +38,8 @@ class CardResponse(BaseModel):
     """Response model for card operations."""
 
     success: bool = Field(..., description="Operation success status")
-    card_id: Optional[str] = Field(None, description="Card ID")
-    message: Optional[str] = Field(None, description="Error message if failed")
+    card_id: str | None = Field(None, description="Card ID")
+    message: str | None = Field(None, description="Error message if failed")
 
 
 class ConfigResponse(BaseModel):
@@ -51,7 +51,7 @@ class ConfigResponse(BaseModel):
 
 
 # API key dependency (simple implementation)
-async def verify_api_key(_x_api_key: Optional[str] = None) -> bool:
+async def verify_api_key(_x_api_key: str | None = None) -> bool:
     """Verify API key (placeholder)."""
     # TODO: Implement proper API key verification
     return True
@@ -306,7 +306,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
         }
 
 
-def _save_base64_image(data: str, config: Config) -> Optional[str]:
+def _save_base64_image(data: str, config: Config) -> str | None:
     """Save base64 encoded image to file.
 
     Args:
@@ -349,7 +349,7 @@ def _save_base64_image(data: str, config: Config) -> Optional[str]:
         return None
 
 
-def _save_base64_audio(data: str, config: Config) -> Optional[str]:
+def _save_base64_audio(data: str, config: Config) -> str | None:
     """Save base64 encoded audio to file.
 
     Args:
