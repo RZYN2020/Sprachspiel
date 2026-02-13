@@ -22,15 +22,31 @@ class ConfigValidationError(Exception):
 class Config:
     """Configuration manager for Sprachspiel."""
 
-    def __init__(self, config_path: Path | None = None):
+    _config: dict[str, Any]
+
+    def __init__(self, config_path: Path | dict[str, Any] | None = None):
         """Initialize configuration manager.
 
         Args:
-            config_path: Path to configuration file. If None, uses default path.
+            config_path: Path to configuration file, or a dictionary with config values.
+                        If None, uses default path.
         """
-        self.config_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
-        self._config: dict[str, Any] = {}
-        self._load_config()
+        if isinstance(config_path, dict):
+            # Dictionary provided - use as config directly
+            self.config_path = DEFAULT_CONFIG_PATH
+            self._config = config_path
+            # Validate the dictionary config
+            self._validate()
+        elif config_path is not None:
+            # Path provided
+            self.config_path = Path(config_path)
+            self._config = {}
+            self._load_config()
+        else:
+            # Use default path
+            self.config_path = DEFAULT_CONFIG_PATH
+            self._config = {}
+            self._load_config()
 
     def _load_config(self) -> None:
         """Load configuration from YAML file."""

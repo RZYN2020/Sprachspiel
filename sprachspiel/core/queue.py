@@ -1,6 +1,7 @@
 """Card queue management for Sprachspiel."""
 
 import json
+from pathlib import Path
 
 from sprachspiel.config import QUEUE_DIR, Config
 from sprachspiel.core.card import CardData
@@ -16,7 +17,12 @@ class CardQueue:
             config: Configuration instance.
         """
         self.config = config
-        self.queue_file = QUEUE_DIR / "queue.json"
+        # Use storage_dir from config if provided, otherwise use default QUEUE_DIR
+        storage_dir = config.get("card_generation.queue.storage_dir")
+        if storage_dir:
+            self.queue_file = Path(storage_dir) / "queue.json"
+        else:
+            self.queue_file = QUEUE_DIR / "queue.json"
         self._queue: dict[str, CardData] = {}
         self._load()
 
@@ -30,16 +36,26 @@ class CardQueue:
             with open(self.queue_file, encoding="utf-8") as f:
                 data = json.load(f)
                 self._queue = {k: CardData.from_dict(v) for k, v in data.items()}
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            raise RuntimeError(f"Failed to load queue file: {e}") from e
+        except (json.JSONDecodeError, KeyError, TypeError):
+            # If the file is corrupted, start with an empty queue
+            self._queue = {}
+
+    def load(self) -> None:
+        """Load queue from file (public method)."""
+        self._load()
 
     def _save(self) -> None:
         """Save queue to file."""
-        QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+        # Ensure the parent directory exists
+        self.queue_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(self.queue_file, "w", encoding="utf-8") as f:
             data = {k: v.to_dict() for k, v in self._queue.items()}
             json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def save(self) -> None:
+        """Save queue to file (public method)."""
+        self._save()
 
     def add(self, card: CardData) -> None:
         """Add card to queue.

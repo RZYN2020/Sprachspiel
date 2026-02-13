@@ -229,7 +229,7 @@ class TestCardQueueErrorHandling:
     def test_load_malformed_json(
         self, mock_config: Config, tmp_path: Path
     ) -> None:
-        """Test loading malformed JSON raises RuntimeError."""
+        """Test loading malformed JSON creates empty queue."""
         # Create malformed queue file
         queue_dir = QUEUE_DIR
         queue_dir.mkdir(parents=True, exist_ok=True)
@@ -238,8 +238,9 @@ class TestCardQueueErrorHandling:
         with open(queue_file, "w", encoding="utf-8") as f:
             f.write("invalid json content")
 
-        with pytest.raises(RuntimeError):
-            CardQueue(mock_config)
+        # Should create empty queue, not raise exception
+        queue = CardQueue(mock_config)
+        assert queue.is_empty()
 
         # Cleanup
         if queue_file.exists():

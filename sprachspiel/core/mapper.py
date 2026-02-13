@@ -29,9 +29,16 @@ class FieldMapper:
             config: Configuration instance.
         """
         self.config = config
-        self.field_mapping: dict[str, str] = config.get("anki.field_mapping", {})
+        # Support both old and new config locations for backward compatibility
+        self.field_mapping: dict[str, str] = config.get("card_generation.field_mapping") or config.get("anki.field_mapping", {})
         self.deck_name: str = config.get("anki.file.deck_name", "Default")
-        self.model_name: str = config.get("anki.file.model_name", "Basic")
+        # Derive model name from field mapping - use CustomModel for non-standard fields
+        standard_fields = {"front", "back"}
+        field_names = set(self.field_mapping.keys())
+        if field_names and not field_names.issubset(standard_fields):
+            self.model_name = "CustomModel"
+        else:
+            self.model_name = config.get("anki.file.model_name", "Basic")
 
     def map_card(self, card: CardData) -> AnkiCard:
         """Map card data to Anki card.
