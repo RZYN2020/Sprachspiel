@@ -1,7 +1,7 @@
 """Tests for data sources."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -55,10 +55,13 @@ class TestBaseDataSource:
 class TestFileImportSource:
     """Unit tests for FileImportSource."""
 
-    def test_init_with_csv_config(self, mock_config: Config) -> None:
+    def test_init_with_csv_config(self, tmp_path: Path, mock_config: Config) -> None:
         """Test file import source initialization with CSV config."""
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_text("word1,context1\nword2,context2\n")
+
         config = {
-            "path": "/path/to/file.csv",
+            "path": str(csv_file),
             "type": "csv",
             "columns": {"word": 0, "context": 1},
         }
@@ -66,63 +69,57 @@ class TestFileImportSource:
 
         assert source.import_type == "csv"
 
-    def test_init_with_text_config(self, mock_config: Config) -> None:
+    def test_init_with_text_config(self, tmp_path: Path, mock_config: Config) -> None:
         """Test file import source initialization with text config."""
+        txt_file = tmp_path / "test.txt"
+        txt_file.write_text("word1\nword2\nword3\n")
+
         config = {
-            "path": "/path/to/file.txt",
+            "path": str(txt_file),
             "type": "text",
             "one_word_per_line": True,
         }
         source = FileImportSource(mock_config, config)
 
-        assert source.import_type == "text_file"
+        # The file type is detected from the extension, which is 'txt' -> 'text'
+        assert source.import_type == "text"
 
-    def test_import_csv(self, mock_config: Config) -> None:
+    def test_import_csv(self, tmp_path: Path, mock_config: Config) -> None:
         """Test CSV import."""
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_text("word1,context1\nword2,context2\n")
+
         config = {
-            "path": "/path/to/file.csv",
+            "path": str(csv_file),
             "type": "csv",
             "columns": {"word": 0, "context": 1},
         }
         source = FileImportSource(mock_config, config)
 
-        # Mock file reading at module level
-        with patch("sprachspiel.sources.file_import.open") as mock_open:
-            mock_file = MagicMock()
-            mock_file.read.return_value = "word1,context1\nword2,context2\n"
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_open.return_value = mock_file
+        cards = source.get_all_cards()
 
-            cards = source.get_all_cards()
+        assert len(cards) == 2
+        assert cards[0].word == "word1"
+        assert cards[0].context == "context1"
 
-            assert len(cards) == 2
-            assert cards[0].word == "word1"
-            assert cards[0].context == "context1"
-
-    def test_import_text_one_word_per_line(self, mock_config: Config) -> None:
+    def test_import_text_one_word_per_line(self, tmp_path: Path, mock_config: Config) -> None:
         """Test text import with one word per line."""
+        txt_file = tmp_path / "test.txt"
+        txt_file.write_text("word1\nword2\nword3\n")
+
         config = {
-            "path": "/path/to/file.txt",
+            "path": str(txt_file),
             "type": "text",
             "one_word_per_line": True,
         }
         source = FileImportSource(mock_config, config)
 
-        # Mock file reading at module level
-        with patch("sprachspiel.sources.file_import.open") as mock_open:
-            mock_file = MagicMock()
-            mock_file.read.return_value = "word1\nword2\nword3\n"
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_open.return_value = mock_file
+        cards = source.get_all_cards()
 
-            cards = source.get_all_cards()
-
-            assert len(cards) == 3
-            assert cards[0].word == "word1"
-            assert cards[1].word == "word2"
-            assert cards[2].word == "word3"
+        assert len(cards) == 3
+        assert cards[0].word == "word1"
+        assert cards[1].word == "word2"
+        assert cards[2].word == "word3"
 
 
 class TestPlayerDataSourceReader:
@@ -155,107 +152,113 @@ class TestPlayerDataSourceReader:
         assert card.context == "The quick brown fox."
         assert card.metadata.source_type == "video"
 
-    def test_find_context_for_word(self, mock_config: Config) -> None:
+    def test_find_context_for_word(self, tmp_path: Path, mock_config: Config) -> None:
         """Test finding context for word."""
-        config = {
-            "video_path": "/path/to/video.mp4",
-            "subtitle_path": "/path/to/subtitle.srt",
-        }
-
-        # Mock file reading at module level
-        with patch("sprachspiel.sources.player.open") as mock_open:
-            mock_file = MagicMock()
-            mock_file.read.return_value = """1
+        # Create a real subtitle file
+        subtitle_file = tmp_path / "subtitle.srt"
+        subtitle_file.write_text("""1
 00:01:23,000 --> 00:01:28,000
 The quick brown fox jumps over lazy dog.
-"""
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_open.return_value = mock_file
+""")
 
-            source = PlayerDataSource(mock_config, config)
+        config = {
+            "video_path": "/path/to/video.mp4",
+            "subtitle_path": str(subtitle_file),
+        }
 
-            context = source._find_context_for_word("quick")
+        source = PlayerDataSource(mock_config, config)
 
-            if context:
-                assert "quick brown fox" in context.lower()
-            else:
-                assert False, "Context should not be None"
+        context = source._find_context_for_word("quick")
+
+        if context:
+            assert "quick brown fox" in context.lower()
+        else:
+            assert False, "Context should not be None"
 
 
 class TestReaderDataSource:
     """Unit tests for ReaderDataSource."""
 
     def test_init_with_pdf_config(self, mock_config: Config) -> None:
-        """Test reader data source initialization with PDF."""
+        """Test reader data source initialization with PDF.
+
+        Note: PDF parsing requires pypdf and a valid PDF file.
+        This test mocks the PDF loading to verify the configuration is stored correctly.
+        """
         config = {
             "file_path": "/path/to/file.pdf",
             "type": "pdf",
         }
-        source = ReaderDataSource(mock_config, config)
+
+        # PDF loading requires pypdf, so we mock _load_content to avoid the dependency
+        with patch.object(ReaderDataSource, "_load_content", return_value="PDF mock content"):
+            source = ReaderDataSource(mock_config, config)
 
         assert source.file_path == Path("/path/to/file.pdf")
         assert source.file_type == "pdf"
 
     def test_init_with_epub_config(self, mock_config: Config) -> None:
-        """Test reader data source initialization with EPUB."""
+        """Test reader data source initialization with EPUB.
+
+        Note: EPUB parsing requires ebooklib and a valid EPUB file.
+        This test mocks the EPUB loading to verify the configuration is stored correctly.
+        """
         config = {
-            "file_path": "/path.0/to/file.epub",
+            "file_path": "/path/to/file.epub",
             "type": "epub",
         }
-        source = ReaderDataSource(mock_config, config)
 
-        assert source.file_path == Path("/path.0/to/file.epub")
+        # EPUB loading requires ebooklib, so we mock _load_content to avoid the dependency
+        with patch.object(ReaderDataSource, "_load_content", return_value="EPUB mock content"):
+            source = ReaderDataSource(mock_config, config)
+
+        assert source.file_path == Path("/path/to/file.epub")
         assert source.file_type == "epub"
 
-    def test_init_with_text_config(self, mock_config: Config) -> None:
+    def test_init_with_text_config(self, tmp_path: Path, mock_config: Config) -> None:
         """Test reader data source initialization with text."""
+        text_file = tmp_path / "file.txt"
+        text_file.write_text("Text content")
+
         config = {
-            "file_path": "/path/to/file.txt",
+            "file_path": str(text_file),
             "type": "text",
         }
         source = ReaderDataSource(mock_config, config)
 
-        assert source.file_path == Path("/path/to/file.txt")
+        assert source.file_path == Path(str(text_file))
         assert source.file_type == "text"
 
     def test_get_card_data_pdf(self, mock_config: Config) -> None:
-        """Test getting card data from PDF with mocked file."""
+        """Test getting card data from PDF with mocked content.
+
+        Note: This test mocks the PDF loading to avoid the pypdf dependency.
+        """
         config = {
             "file_path": "/path/to/file.pdf",
             "type": "pdf",
         }
 
-        # Mock file reading at module level
-        with patch("sprachspiel.sources.reader.open") as mock_open:
-            mock_file = MagicMock()
-            mock_file.read.return_value = "Sample PDF content text."
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_open.return_value = mock_file
-
+        # Mock _load_content to avoid pypdf dependency
+        with patch.object(ReaderDataSource, "_load_content", return_value="PDF content text"):
             source = ReaderDataSource(mock_config, config)
-            card = source.get_card_data("example")
 
-            assert card.word == "example"
+        card = source.get_card_data("example")
 
-    def test_get_card_data_text(self, mock_config: Config) -> None:
-        """Test getting card data from text file with mocked file."""
+        assert card.word == "example"
+
+    def test_get_card_data_text(self, tmp_path: Path, mock_config: Config) -> None:
+        """Test getting card data from text file."""
+        text_file = tmp_path / "file.txt"
+        text_file.write_text("The word example is in this sentence.")
+
         config = {
-            "file_path": "/path/to/file.txt",
+            "file_path": str(text_file),
             "type": "text",
         }
 
-        # Mock file reading at module level
-        with patch("sprachspiel.sources.reader.open") as mock_open:
-            mock_file = MagicMock()
-            mock_file.read.return_value = "The word example is in this sentence."
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_open.return_value = mock_file
+        source = ReaderDataSource(mock_config, config)
+        card = source.get_card_data("example")
 
-            source = ReaderDataSource(mock_config, config)
-            card = source.get_card_data("example")
-
-            assert card.word == "example"
-            assert "sentence" in card.context
+        assert card.word == "example"
+        assert "sentence" in card.context

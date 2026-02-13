@@ -36,7 +36,7 @@ def sample_card() -> CardData:
         ),
         media=Media(
             screenshot="/media/screenshot.png",
-            audio_word="/media/word.mp3",
+            audio_word="/media/audio_word.mp3",
         ),
     )
 

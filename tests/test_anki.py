@@ -38,10 +38,10 @@ class TestAnkiConnect:
     def test_init_with_custom_host_port(self, mock_config: Config) -> None:
         """Test AnkiConnect initialization with custom host and port."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "anki.connect.host": "192.168.1.1",
                 "anki.connect.port": 8080,
-            }
+            }.get(key, default)
         )
         connector = AnkiConnect(mock_config)
 
@@ -185,7 +185,9 @@ class TestAnkiConnect:
     ) -> None:
         """Test adding note with API key authentication."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={"anki.connect.api_key": "test_api_key"}
+            side_effect=lambda key, default=None: {
+                "anki.connect.api_key": "test_api_key"
+            }.get(key, default)
         )
         connector = AnkiConnect(mock_config)
 
@@ -216,11 +218,13 @@ class TestAnkiConnect:
         """Test retry logic on failed requests."""
         call_count = 0
 
-        def side_effect(_args: list, _kwargs: dict) -> MagicMock:
-            nonlocal call_count  # type: ignore[name-defined]
+        import requests
+
+        def side_effect(*_args: object, **_kwargs: object) -> MagicMock:
+            nonlocal call_count
             call_count += 1
-            if call_count < 2:  # First two calls fail
-                raise Exception("Temporary error")
+            if call_count <= 2:  # First two calls fail
+                raise requests.RequestException("Temporary error")
             mock_resp = MagicMock()
             mock_resp.json.return_value = [None, 123]
             mock_resp.raise_for_status.return_value = None
@@ -255,10 +259,10 @@ class TestFileExporter:
     def test_export_cards(self, mock_config: Config) -> None:
         """Test exporting cards to .apkg file."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "anki.file.output_dir": "/tmp/output",
                 "anki.file.deck_name": "Test Deck",
-            }
+            }.get(key, default)
         )
         exporter = FileExporter(mock_config)
 

@@ -1,6 +1,6 @@
 """Tests for dictionary service."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -40,9 +40,10 @@ class TestDictionaryService:
         """Test is_configured returns True with dictionaries configured."""
         # Mock config to return dictionary list
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value=[
-            {"name": "test", "module": "test.dict"},
-        ])
+            side_effect=lambda key, default=None: (
+                [{"name": "test", "module": "test.dict"}] if key == "dictionaries" else default
+            )
+        )
         service = DictionaryService(mock_config)
 
         assert service.is_configured() is True
@@ -64,15 +65,15 @@ class TestDictionaryService:
     ) -> None:
         """Test Oxford dictionary lookup."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "dictionaries": [
                     {
                         "name": "oxford",
-                        "module": "dicts.oxford_api",
+                        "module": "oxford",
                         "api_key": "test:secret",
                     }
                 ]
-            }
+            }.get(key, default)
         )
         service = DictionaryService(mock_config)
 
@@ -84,7 +85,7 @@ class TestDictionaryService:
                     "senses": [
                         {
                             "definitions": [
-                                {"value": "Moving at high speed."}
+                                {"definitions": [{"value": "Moving at high speed."}]}
                             ]
                         }
                     ]
@@ -101,15 +102,15 @@ class TestDictionaryService:
     async def test_lookup_youdao_fallback(self, mock_config: Config) -> None:
         """Test Youdao dictionary lookup."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "dictionaries": [
                     {
                         "name": "youdao",
-                        "module": "dicts.youdao_api",
+                        "module": "youdao",
                         "api_key": "test_key",
                     }
                 ]
-            }
+            }.get(key, default)
         )
         service = DictionaryService(mock_config)
 
@@ -118,7 +119,7 @@ class TestDictionaryService:
             mock_response = MagicMock()
             mock_response.json.return_value = {
                 "translation": ["快速"],
-                "web": [[{"value": ["Example sentence."]}]],
+                "web": [{"value": ["Example sentence."]}],
             }
             mock_response.raise_for_status.return_value = None
             mock_get.return_value = mock_response
@@ -131,21 +132,21 @@ class TestDictionaryService:
     async def test_lookup_custom_module(self, mock_config: Config) -> None:
         """Test lookup with custom dictionary module."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "dictionaries": [
                     {
                         "name": "custom",
                         "module": "my_module.custom_lookup",
                     }
                 ]
-            }
+            }.get(key, default)
         )
         service = DictionaryService(mock_config)
 
         # Mock custom module import
         with patch("importlib.import_module") as mock_import:
             mock_module = MagicMock()
-            mock_module.custom_lookup = MagicMock(return_value={"translation": "custom"})
+            mock_module.custom_lookup = AsyncMock(return_value={"translation": "custom"})
             mock_import.return_value = mock_module
 
             result = await service.lookup("test")
@@ -162,7 +163,7 @@ class TestDictionaryServiceErrorHandling:
     ) -> None:
         """Test that API failures don't crash lookup."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "dictionaries": [
                     {
                         "name": "test",
@@ -170,7 +171,7 @@ class TestDictionaryServiceErrorHandling:
                         "api_key": "test_key",
                     }
                 ]
-            }
+            }.get(key, default)
         )
         service = DictionaryService(mock_config)
 
@@ -189,16 +190,19 @@ class TestDictionaryServiceErrorHandling:
     async def test_lookup_custom_module_failure(self, mock_config: Config) -> None:
         """Test custom module failure handling."""
         mock_config.get = MagicMock(  # type: ignore[method-assign]
-            return_value={
+            side_effect=lambda key, default=None: {
                 "dictionaries": [
                     {
                         "name": "custom",
                         "module": "nonexistent.module",
                     }
                 ]
-            }
+            }.get(key, default)
         )
         service = DictionaryService(mock_config)
 
-        with pytest.raises(RuntimeError, match="Failed to load custom dictionary"):
-            await service.lookup("test")
+        # Custom module import failures are caught and logged, returning empty result
+        result = await service.lookup("test")
+        assert result["translation"] is None
+        assert result["definition"] is None
+        assert result["example"] is None

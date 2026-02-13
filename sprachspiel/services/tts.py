@@ -64,15 +64,14 @@ class TTSService:
         """
         module_name = provider_config.get("module")
 
-        # Custom module support
-        if module_name and "." in module_name:
-            return await self._synthesize_custom(text, provider_config, voice)
-
         # Built-in providers
-        if module_name == "tts.google_translate":
+        if module_name in ("google_translate", "tts.google_translate"):
             return await self._synthesize_google(text, provider_config, voice)
-        elif module_name == "tts.azure":
+        elif module_name in ("azure", "tts.azure"):
             return await self._synthesize_azure(text, provider_config, voice)
+        # Custom module support (must have a dot but not be a built-in module)
+        elif module_name and "." in module_name:
+            return await self._synthesize_custom(text, provider_config, voice)
 
         raise RuntimeError(f"Unknown TTS provider: {module_name}")
 

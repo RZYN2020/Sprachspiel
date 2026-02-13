@@ -60,29 +60,44 @@ class BaseSubtitleParser(ABC):
         """Parse timestamp string to timedelta.
 
         Args:
-            timestamp_str: Timestamp string (e.g., "00:01:23,000").
+            timestamp_str: Timestamp string (e.g., "00:01:23,000" for SRT
+            or "00:01:23.000" for VTT).
 
         Returns:
             Timedelta.
         """
-        # Handle both SRT/VTT (00:01:23,000) and ASS (0:00:01.23) formats
+        # Handle both SRT (00:01:23,000), VTT (00:01:23.000), and ASS (0:00:01.23)
         timestamp_str = timestamp_str.strip()
 
-        # Replace common separators
-        timestamp_str = timestamp_str.replace(",", ".").replace(".", ":")
+        # Replace comma with period for consistent decimal separator
+        timestamp_str = timestamp_str.replace(",", ".")
 
+        # Split by colon to get time components
         parts_str = timestamp_str.split(":")
-        parts: list[int] = [int(p) for p in parts_str]
 
-        if len(parts) == 4:
-            # Hours, minutes, seconds, milliseconds
-            return timedelta(hours=parts[0], minutes=parts[1], seconds=parts[2], milliseconds=parts[3])
-        elif len(parts) == 3:
-            # Hours, minutes, seconds.milliseconds
-            return timedelta(hours=parts[0], minutes=parts[1], seconds=parts[2])
-        elif len(parts) == 2:
-            # Minutes, seconds.milliseconds
-            return timedelta(minutes=parts[0], seconds=parts[1])
-        else:
+        if len(parts_str) == 3:
+            # Format: "HH:MM:SS.mmm" (VTT) or "HH:MM:SS,mmm" (SRT)
+            hours = int(parts_str[0])
+            minutes = int(parts_str[1])
+            # Split seconds and milliseconds
+            sec_parts = parts_str[2].split(".")
+            seconds = int(sec_parts[0])
+            milliseconds = int(sec_parts[1]) if len(sec_parts) > 1 else 0
+            return timedelta(hours=hours, minutes=minutes, seconds=seconds, milliseconds=milliseconds)
+        elif len(parts_str) == 2:
+            # Format: "MM:SS.mmm" or "H:MM:SS.cc" (ASS format)
+            # ASS format uses centiseconds (2 digits), VTT/SRT uses milliseconds (3 digits)
+            sec_parts = parts_str[1].split(".")
+            seconds = int(sec_parts[0])
+            if len(sec_parts) > 1:
+                frac_part = sec_parts[1].ljust(3, "0")[:3]  # Pad or truncate to 3 digits
+                milliseconds = int(frac_part)
+            else:
+                milliseconds = 0
+            return timedelta(minutes=int(parts_str[0]), seconds=seconds, milliseconds=milliseconds)
+        elif len(parts_str) == 1:
             # Just seconds
-            return timedelta(seconds=parts[0])
+            return timedelta(seconds=int(parts_str[0]))
+        else:
+            # Fallback for other formats
+            return timedelta()

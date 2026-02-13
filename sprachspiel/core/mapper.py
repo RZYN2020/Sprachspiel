@@ -130,8 +130,8 @@ class FieldMapper:
         Raises:
             TemplateError: If template is malformed.
         """
-        if template:
-            return str(template)
+        if not template:
+            return ""
 
         def replace_var(match: re.Match[str]) -> str:
             var_name: str = match.group(1)

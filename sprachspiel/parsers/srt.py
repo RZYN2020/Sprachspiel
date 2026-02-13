@@ -34,11 +34,13 @@ class SRTParser(BaseSubtitleParser):
         for match in matches:
             index = int(match.group(1))
 
-            # Parse start time
-            start = self.parse_timestamp(match.group(2))
+            # Parse start time - construct full timestamp string from groups
+            start_str = f"{match.group(2)}:{match.group(3)}:{match.group(4)},{match.group(5)}"
+            start = self.parse_timestamp(start_str)
 
-            # Parse end time
-            end = self.parse_timestamp(match.group(6))
+            # Parse end time - construct full timestamp string from groups
+            end_str = f"{match.group(6)}:{match.group(7)}:{match.group(8)},{match.group(9)}"
+            end = self.parse_timestamp(end_str)
 
             # Get text and clean up
             text = match.group(10).strip()

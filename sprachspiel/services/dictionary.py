@@ -40,8 +40,8 @@ class DictionaryService:
             try:
                 dict_result = await self._lookup_dictionary(word, dict_config)
 
-                # Use first successful result
-                if dict_result.get("translation"):
+                # Use first successful result (any non-empty field qualifies)
+                if dict_result.get("translation") or dict_result.get("definition") or dict_result.get("example"):
                     result.update(dict_result)
                     break
             except Exception as e:
@@ -63,17 +63,16 @@ class DictionaryService:
         """
         module_name = dict_config.get("module")
 
-        # Custom module support
-        if module_name and "." in module_name:
-            return await self._lookup_custom(word, dict_config)
-
         # Built-in dictionaries
         result = {"translation": None, "definition": None, "example": None}
 
-        if module_name == "dicts.oxford_api":
+        if module_name in ("oxford", "dicts.oxford_api"):
             result = await self._lookup_oxford(word, dict_config)
-        elif module_name == "dicts.youdao_api":
+        elif module_name in ("youdao", "dicts.youdao_api"):
             result = await self._lookup_youdao(word, dict_config)
+        # Custom module support (must have a dot but not be a built-in module)
+        elif module_name and "." in module_name:
+            return await self._lookup_custom(word, dict_config)
 
         return result
 

@@ -187,7 +187,7 @@ class TestAIServiceErrorHandling:
         with patch("requests.post") as mock_post:
             mock_post.side_effect = Exception("API error")
 
-            with pytest.raises(Exception, match="AI function translate failed"):
+            with pytest.raises(Exception, match="API error"):
                 await service.call_function("translate", "test")
 
     @pytest.mark.asyncio

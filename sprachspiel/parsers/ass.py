@@ -9,16 +9,6 @@ from sprachspiel.parsers.subtitle_base import BaseSubtitleParser, SubtitleEntry
 class ASSParser(BaseSubtitleParser):
     """Parser for ASS/SSA subtitle format."""
 
-    # ASS dialogue pattern
-    DIALOGUE_PATTERN = re.compile(
-        r"Dialogue:\s*"  # Start with Dialogue:
-        r",\s*"  # Layer
-        r"([^,]+?),\s*"  # Start (h:mm:ss.cs)
-        r"([^,]+?),\s*"  # End (h:mm:ss.cs)
-        r".*?"  # Skip other fields (Style, Name, MarginL/R/V, Effect)
-        r"(.+)"  # Text (last field)
-    )
-
     def parse(self, content: str) -> list[SubtitleEntry]:
         """Parse ASS subtitle content.
 
@@ -36,11 +26,20 @@ class ASSParser(BaseSubtitleParser):
             line = line.strip()
 
             if line.startswith("Dialogue:"):
-                match = self.DIALOGUE_PATTERN.match(line)
-                if match:
-                    start = self._parse_ass_timestamp(match.group(1))
-                    end = self._parse_ass_timestamp(match.group(2))
-                    text = match.group(3).strip()
+                # Parse ASS dialogue line manually
+                # Format: Dialogue: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+                parts = line.split(",", 9)  # Split into at most 10 parts
+
+                if len(parts) >= 10:
+                    # parts[0] = "Dialogue:"
+                    # parts[1] = Layer
+                    start_str = parts[2].strip()
+                    end_str = parts[3].strip()
+                    # parts[4-8] = Style, Name, MarginL, MarginR, MarginV, Effect
+                    text = parts[9].strip()
+
+                    start = self._parse_ass_timestamp(start_str)
+                    end = self._parse_ass_timestamp(end_str)
 
                     # Clean ASS text
                     text = self._clean_text(text)

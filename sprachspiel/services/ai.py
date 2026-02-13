@@ -64,7 +64,7 @@ class AIService:
         Returns:
             Function result or None.
         """
-        if name not in self.functions:
+        if not self.is_configured() or name not in self.functions:
             return None
 
         func_config = self.functions[name]

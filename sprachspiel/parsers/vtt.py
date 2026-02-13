@@ -30,14 +30,15 @@ class VTTParser(BaseSubtitleParser):
         lines = content.splitlines()
         index = 0
 
-        # Skip header
+        # Skip header (WEBVTT line)
         i = 0
         while i < len(lines):
             line = lines[i].strip()
 
-            if line.startswith("-->") and ":" in line:
+            if "-->" in line and ":" in line:
                 # Found a timestamp line, parse cue
-                start_str, end_str = line.split(">")
+                # VTT format: "HH:MM:SS.mmm --> HH:MM:SS.mmm"
+                start_str, end_str = line.split("-->")
                 start_str = start_str.strip()
                 end_str = end_str.strip()
 
@@ -47,7 +48,7 @@ class VTTParser(BaseSubtitleParser):
                 # Collect text lines
                 text_lines: list[str] = []
                 j = i + 1
-                while j < len(lines) and not lines[j].strip().startswith("-->"):
+                while j < len(lines) and "-->" not in lines[j]:
                     text_line = lines[j].strip()
                     if text_line and not text_line.startswith("NOTE"):
                         text_lines.append(text_line)

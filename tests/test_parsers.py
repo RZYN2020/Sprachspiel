@@ -135,8 +135,8 @@ Second subtitle
 """
         entries = srt_parser.parse(content)
 
-        # Find entry within first subtitle
-        entry = srt_parser.find_entry_at_time(entries, timedelta(seconds=24))
+        # Find entry within first subtitle (00:01:23-00:01:28 = 83-88 seconds)
+        entry = srt_parser.find_entry_at_time(entries, timedelta(seconds=85))
         assert entry is not None
         assert entry.text == "Hello world"
 
@@ -166,7 +166,9 @@ class TestVTTParser:
 
     def test_parse_single_entry(self, vtt_parser: VTTParser) -> None:
         """Test parsing single VTT entry."""
-        content = """00:01:23.000 --> 00:01:28.000
+        content = """WEBVTT
+
+00:01:23.000 --> 00:01:28.000
 Hello world
 """
         entries = vtt_parser.parse(content)
@@ -176,7 +178,9 @@ Hello world
 
     def test_clean_html_tags(self, vtt_parser: VTTParser) -> None:
         """Test that HTML tags are cleaned."""
-        content = """00:01:23.000 --> 00:01:28.000
+        content = """WEBVTT
+
+00:01:23.000 --> 00:01:28.000
 <i>Hello</i> <b>world</b>
 """
         entries = vtt_parser.parse(content)
@@ -202,8 +206,8 @@ class TestASSParser:
     def test_parse_simple_content(self, ass_parser: ASSParser) -> None:
         """Test parsing simple ASS content."""
         content = """[Events]
-Format: Start,End,Text
-Dialogue: 0,0:00.00,0,0:05.00,,0,0,0,,Hello world
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,Hello world
 """
         entries = ass_parser.parse(content)
 
