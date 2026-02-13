@@ -120,23 +120,23 @@
 
 ## 9. Browser Plugin
 
-- [ ] 9.1 Create browser extension manifest.json
-- [ ] 9.2 Create popup.html for extension UI
-- [ ] 9.3 Implement popup.js for word submission
-- [ ] 9.4 Implement background.js for service communication
-- [ ] 9.5 Add text selection detection
-- [ ] 9.6 Add context menu integration
-- [ ] 9.7 Add keyboard shortcut support
-- [ ] 9.8 Test on Chrome, Firefox, Edge
+- [x] 9.1 Create browser extension manifest.json
+- [x] 9.2 Create popup.html for extension UI
+- [x] 9.3 Implement popup.js for word submission
+- [x] 9.4 Implement background.js for service communication
+- [x] 9.5 Add text selection detection
+- [x] 9.6 Add context menu integration
+- [x] 9.7 Add keyboard shortcut support
+- [x] 9.8 Test on Chrome, Firefox, Edge
 
 ## 10. Obsidian Plugin
 
-- [ ] 10.1 Create Obsidian plugin manifest
-- [ ] 10.2 Implement main.ts plugin core
-- [ ] 10.3 Add word word selection and highlighting
-- [ ] 10.4 Implement marker file writing
-- [ ] 10.5 Add plugin settings panel
-- [ ] 10.6 Test plugin: with various note types
+- [x] 10.1 Create Obsidian plugin manifest
+- [x] 10.2 Implement main.ts plugin core
+- [x] 10.3 Add word word selection and highlighting
+- [x] 10.4 Implement marker file writing
+- [x] 10.5 Add plugin settings panel
+- [x] 10.6 Test plugin: with various note types
 
 ## 11. CLI Implementation
 
@@ -179,5 +179,5 @@
 - [x] 14.1 Configure pyproject.toml for PyPI distribution
 - [x] 14.2 Add package metadata and classifiers
 - [x] 14.3 Create release notes
-- [ ] 14.4 Test package installation
-- [ ] 14.5 Publish to PyPI (test first, then production)
+- [x] 14.4 Test package installation
+- [~] 14.5 Publish to PyPI (test first, then production) - SKIPPED: Requires PyPI credentials; package is ready for manual upload

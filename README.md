@@ -229,6 +229,65 @@ Features:
 - One-word-per-line text import
 - Batch card creation
 
+### Browser Extension
+
+The browser extension allows you to create Anki cards directly from any webpage.
+
+**Features:**
+- Text selection detection on any webpage
+- Right-click context menu integration
+- Keyboard shortcut support (Ctrl+Shift+S / Cmd+Shift+S)
+- Popup UI for reviewing and sending words
+- Automatic page context extraction
+
+**Installation:**
+
+1. Open Chrome/Edge/Firefox and navigate to `chrome://extensions` (or `about:addons` for Firefox)
+2. Enable "Developer mode"
+3. Click "Load unpacked" and select the `plugins/browser/` directory
+4. The extension icon should appear in your toolbar
+
+**Configuration:**
+
+Click the extension icon to configure:
+- Sprachspiel server URL (default: http://localhost:8000)
+- API key (if authentication is enabled)
+
+### Obsidian Plugin
+
+The Obsidian plugin enables seamless card creation from your knowledge base.
+
+**Features:**
+- Word selection and highlighting in notes
+- Right-click context menu integration
+- Command palette commands
+- File-based marker communication
+- Settings panel for configuration
+
+**Installation:**
+
+1. Copy the `plugins/obsidian/` directory to your vault's `.obsidian/plugins/` folder
+2. Restart Obsidian
+3. Go to Settings → Community Plugins
+4. Enable "Sprachspiel"
+
+**Configuration:**
+
+In the plugin settings:
+- **Server URL**: Sprachspiel HTTP server URL
+- **API Key**: Optional authentication key
+- **Word Marker Path**: File path for word storage (default: `.sprachspiel/words.json`)
+- **Auto-send via HTTP**: Enable automatic HTTP submission
+- **Show Notifications**: Enable UI notifications
+
+**Usage:**
+
+1. Select text in any note
+2. Right-click and choose "Send to Sprachspiel"
+3. Or use the command palette (Ctrl+P → "Send selection to Sprachspiel")
+
+Words are written to the marker file and can be processed by Sprachspiel.
+
 ## Enhancement Services
 
 ### Dictionary Service
@@ -309,6 +368,15 @@ uv run ruff check sprachspiel tests
 sprachspiel/
 ├── pyproject.toml
 ├── config.yaml
+├── plugins/
+│   ├── browser/          # Browser extension (Chrome/Firefox/Edge)
+│   │   ├── manifest.json
+│   │   ├── popup.html
+│   │   ├── popup.js
+│   │   └── background.js
+│   └── obsidian/         # Obsidian plugin
+│       ├── manifest.json
+│       └── main.ts
 ├── sprachspiel/
 │   ├── __init__.py
 │   ├── cli.py

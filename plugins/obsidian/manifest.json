@@ -1,0 +1,11 @@
+{
+  "id": "sprachspiel",
+  "name": "Sprachspiel",
+  "version": "0.1.0",
+  "minAppVersion": "0.15.0",
+  "description": "Create Anki vocabulary cards from your Obsidian notes",
+  "author": "Sprachspiel Team",
+  "authorUrl": "https://github.com/yourusername/sprachspiel",
+  "fundingUrl": "",
+  "isDesktopOnly": false
+}
