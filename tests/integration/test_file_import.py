@@ -26,12 +26,12 @@ def file_importer() -> FileImporter:
             "field_mapping": {
                 "front": "${word}",
                 "back": "${context}",
-            }
+            },
         },
         "media": {"organization": "flat"},
-        "dictionary": {"enabled": False},
-        "ai": {"enabled": False},
-        "tts": {"enabled": False},
+        "dictionaries": [],
+        "ai": {"provider": "openai", "api_key": ""},
+        "tts": [],
     }
     config = Config(config_dict)
     return FileImporter(config)

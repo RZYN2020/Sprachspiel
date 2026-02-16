@@ -21,20 +21,19 @@ def minimal_config() -> Config:
     config_dict = {
         "anki": {
             "mode": "file",
-            "connect": {"host": "localhost", "port": 8765},
             "file": {"output_dir": "./output", "deck_name": "Test Deck"},
-        },
-        "card_generation": {
-            "mode": "real-time",
             "field_mapping": {
                 "front": "${word}",
                 "back": "${translation}",
             },
         },
+        "card_generation": {
+            "mode": "real-time",
+        },
         "media": {"organization": "flat"},
-        "dictionary": {"enabled": False},
-        "ai": {"enabled": False},
-        "tts": {"enabled": False},
+        "dictionaries": [],
+        "ai": {"provider": "openai", "api_key": ""},
+        "tts": [],
     }
     return Config(config_dict)
 
@@ -70,7 +69,9 @@ class TestCardEngine:
         anki_card = await engine.generate_card(sample_card_data)
 
         assert anki_card.deck_name == "Test Deck"
-        assert anki_card.model_name == "Basic"
+        # In strong-typed config, field_mapping always has all fields (with defaults)
+        # so model_name is always "CustomModel"
+        assert anki_card.model_name == "CustomModel"
         assert "front" in anki_card.fields
         assert "back" in anki_card.fields
         assert anki_card.fields["front"] == "TestWord"
@@ -86,9 +87,6 @@ class TestCardEngine:
             "anki": {
                 "mode": "file",
                 "file": {"output_dir": "./output", "deck_name": "Custom Deck"},
-            },
-            "card_generation": {
-                "mode": "real-time",
                 "field_mapping": {
                     "Word": "${word}",
                     "Context": "${context}",
@@ -96,10 +94,13 @@ class TestCardEngine:
                     "FullEntry": "${word} - ${translation}",
                 },
             },
+            "card_generation": {
+                "mode": "real-time",
+            },
             "media": {"organization": "flat"},
-            "dictionary": {"enabled": False},
-            "ai": {"enabled": False},
-            "tts": {"enabled": False},
+            "dictionaries": [],
+            "ai": {"provider": "openai", "api_key": ""},
+            "tts": [],
         }
         config = Config(config_dict)
         engine = CardEngine(config)
@@ -123,9 +124,6 @@ class TestCardEngine:
             "anki": {
                 "mode": "file",
                 "file": {"output_dir": "./output", "deck_name": "HTML Deck"},
-            },
-            "card_generation": {
-                "mode": "real-time",
                 "field_mapping": {
                     "front": "<h2>${word}</h2>",
                     "back": """<div style="text-align: center;">
@@ -135,10 +133,13 @@ class TestCardEngine:
 </div>""",
                 },
             },
+            "card_generation": {
+                "mode": "real-time",
+            },
             "media": {"organization": "flat"},
-            "dictionary": {"enabled": False},
-            "ai": {"enabled": False},
-            "tts": {"enabled": False},
+            "dictionaries": [],
+            "ai": {"provider": "openai", "api_key": ""},
+            "tts": [],
         }
         config = Config(config_dict)
         engine = CardEngine(config)
@@ -177,12 +178,13 @@ class TestCardEngineInitialization:
             "anki": {
                 "mode": "file",
                 "file": {"output_dir": "./output", "deck_name": "Test Deck"},
+                "field_mapping": {},
             },
-            "card_generation": {"mode": "real-time", "field_mapping": {}},
+            "card_generation": {"mode": "real-time"},
             "media": {"organization": "flat"},
-            "dictionary": {"enabled": False},
-            "ai": {"enabled": False},
-            "tts": {"enabled": False},
+            "dictionaries": [],
+            "ai": {"provider": "openai", "api_key": ""},
+            "tts": [],
         }
         config = Config(config_dict)
         engine = CardEngine(config)
@@ -196,12 +198,13 @@ class TestCardEngineInitialization:
             "anki": {
                 "mode": "connect",
                 "connect": {"host": "localhost", "port": 8765},
+                "field_mapping": {},
             },
-            "card_generation": {"mode": "real-time", "field_mapping": {}},
+            "card_generation": {"mode": "real-time"},
             "media": {"organization": "flat"},
-            "dictionary": {"enabled": False},
-            "ai": {"enabled": False},
-            "tts": {"enabled": False},
+            "dictionaries": [],
+            "ai": {"provider": "openai", "api_key": ""},
+            "tts": [],
         }
         config = Config(config_dict)
         engine = CardEngine(config)

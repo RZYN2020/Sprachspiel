@@ -1,10 +1,10 @@
 """Tests for the AI service."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from sprachspiel.config import Config
+from sprachspiel.config import AIConfig, Config
 from sprachspiel.services.ai import AIService
 
 
@@ -18,6 +18,25 @@ def mock_config() -> Config:
 def mock_ai_service(mock_config: Config) -> AIService:
     """Create mock AI service for testing."""
     return AIService(mock_config)
+
+
+def create_mock_ai_config(
+    provider: str = "openai",
+    api_key: str = "",
+    base_url: str = "https://api.openai.com/v1",
+    model: str = "gpt-4o-mini",
+    functions: dict | None = None,
+) -> AIConfig:
+    """Create a mock AIConfig for testing."""
+    if functions is None:
+        functions = {}
+    return AIConfig(
+        provider=provider,
+        api_key=api_key,
+        base_url=base_url,
+        model=model,
+        functions=functions,
+    )
 
 
 class TestAIService:
@@ -37,17 +56,13 @@ class TestAIService:
 
     def test_is_configured_with_api_key_and_functions(self, mock_config: Config) -> None:
         """Test is_configured returns True with API key and functions."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.api_key": "test_key",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate ${word}"},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            api_key="test_key",
+            functions={"translate": {"prompt": "Translate ${word}"}},
         )
-        service = AIService(mock_config)
-
-        assert service.is_configured() is True
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
+            assert service.is_configured() is True
 
     def test_has_function(self, mock_ai_service: AIService) -> None:
         """Test has_function checks if function exists."""
@@ -61,18 +76,18 @@ class TestAIService:
         assert "example" not in custom
 
     @pytest.mark.asyncio
-    async def test_call_function_not_configured(
-        self, mock_ai_service: AIService
-    ) -> None:
+    async def test_call_function_not_configured(self) -> None:
         """Test calling function when not configured returns None."""
-        result = await mock_ai_service.call_function("translate", "test")
+        mock_config = MagicMock()
+        mock_config.ai = PropertyMock(side_effect=AttributeError("No ai config"))
+        mock_config.get = MagicMock(return_value=None)
+        service = AIService(mock_config)
+        result = await service.call_function("translate", "test")
 
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_call_function_nonexistent(
-        self, mock_ai_service: AIService
-    ) -> None:
+    async def test_call_function_nonexistent(self, mock_ai_service: AIService) -> None:
         """Test calling non-existent function returns None."""
         result = await mock_ai_service.call_function("nonexistent", "test")
 
@@ -81,86 +96,75 @@ class TestAIService:
     @pytest.mark.asyncio
     async def test_call_function_openai(self, mock_config: Config) -> None:
         """Test calling function with OpenAI provider."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.provider": "openai",
-                "ai.api_key": "test_key",
-                "ai.base_url": "https://api.openai.com/v1",
-                "ai.model": "gpt-4o-mini",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate '${word}' to Chinese."},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            provider="openai",
+            api_key="test_key",
+            functions={"translate": {"prompt": "Translate '${word}' to Chinese."}},
         )
-        service = AIService(mock_config)
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
 
-        with patch("requests.post") as mock_post:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "choices": [{"message": {"content": "翻译"}}],
-            }
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+            with patch("requests.post") as mock_post:
+                mock_response = MagicMock()
+                mock_response.json.return_value = {
+                    "choices": [{"message": {"content": "翻译"}}],
+                }
+                mock_response.raise_for_status.return_value = None
+                mock_post.return_value = mock_response
 
-            result = await service.call_function("translate", "test")
+                result = await service.call_function("translate", "test")
 
-            assert result == "翻译"
+                assert result == "翻译"
 
     @pytest.mark.asyncio
     async def test_call_function_anthropic(self, mock_config: Config) -> None:
         """Test calling function with Anthropic provider."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.provider": "anthropic",
-                "ai.api_key": "test_key",
-                "ai.base_url": "https://api.anthropic.com/v1",
-                "ai.model": "claude-3-5-sonnet-20241022",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate '${word}' to Chinese."},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            provider="anthropic",
+            api_key="test_key",
+            base_url="https://api.anthropic.com/v1",
+            model="claude-3-5-sonnet-20241022",
+            functions={"translate": {"prompt": "Translate '${word}' to Chinese."}},
         )
-        service = AIService(mock_config)
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
 
-        with patch("requests.post") as mock_post:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "content": [{"text": "翻译"}],
-            }
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+            with patch("requests.post") as mock_post:
+                mock_response = MagicMock()
+                mock_response.json.return_value = {
+                    "content": [{"text": "翻译"}],
+                }
+                mock_response.raise_for_status.return_value = None
+                mock_post.return_value = mock_response
 
-            result = await service.call_function("translate", "test")
+                result = await service.call_function("translate", "test")
 
-            assert result == "翻译"
+                assert result == "翻译"
 
     @pytest.mark.asyncio
     async def test_call_function_custom_endpoint(self, mock_config: Config) -> None:
         """Test calling function with custom endpoint."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.provider": "custom",
-                "ai.api_key": "test_key",
-                "ai.base_url": "https://custom.example.com/v1",
-                "ai.model": "custom-model",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate '${word}' to Chinese."},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            provider="custom",
+            api_key="test_key",
+            base_url="https://custom.example.com/v1",
+            model="custom-model",
+            functions={"translate": {"prompt": "Translate '${word}' to Chinese."}},
         )
-        service = AIService(mock_config)
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
 
-        with patch("requests.post") as mock_post:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "choices": [{"message": {"content": "翻译"}}],
-            }
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+            with patch("requests.post") as mock_post:
+                mock_response = MagicMock()
+                mock_response.json.return_value = {
+                    "choices": [{"message": {"content": "翻译"}}],
+                }
+                mock_response.raise_for_status.return_value = None
+                mock_post.return_value = mock_response
 
-            result = await service.call_function("translate", "test")
+                result = await service.call_function("translate", "test")
 
-            assert result == "翻译"
+                assert result == "翻译"
 
 
 class TestAIServiceErrorHandling:
@@ -171,49 +175,42 @@ class TestAIServiceErrorHandling:
         self, mock_config: Config
     ) -> None:
         """Test API failures raise errors."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.provider": "openai",
-                "ai.api_key": "test_key",
-                "ai.base_url": "https://api.openai.com/v1",
-                "ai.model": "gpt-4o-mini",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate '${word}' to Chinese."},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            provider="openai",
+            api_key="test_key",
+            functions={"translate": {"prompt": "Translate '${word}' to Chinese."}},
         )
-        service = AIService(mock_config)
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
 
-        with patch("requests.post") as mock_post:
-            mock_post.side_effect = Exception("API error")
+            with patch("requests.post") as mock_post:
+                mock_post.side_effect = Exception("API error")
 
-            with pytest.raises(Exception, match="API error"):
-                await service.call_function("translate", "test")
+                with pytest.raises(Exception, match="API error"):
+                    await service.call_function("translate", "test")
 
     @pytest.mark.asyncio
     async def test_call_function_with_kwargs(self, mock_config: Config) -> None:
         """Test calling function with custom kwargs."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "ai.provider": "openai",
-                "ai.api_key": "test_key",
-                "ai.base_url": "https://api.openai.com/v1",
-                "ai.model": "gpt-4.0-mini",
-                "ai.functions": {
-                    "translate": {"prompt": "Translate '${word}' to ${language}."},
-                },
-            }.get(key, default)
+        mock_ai = create_mock_ai_config(
+            provider="openai",
+            api_key="test_key",
+            model="gpt-4.0-mini",
+            functions={"translate": {"prompt": "Translate '${word}' to ${language}."}},
         )
-        service = AIService(mock_config)
+        with patch("sprachspiel.config.Config.ai", mock_ai):
+            service = AIService(mock_config)
 
-        with patch("requests.post") as mock_post:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "choices": [{"message": {"content": "中文翻译"}}],
-            }
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+            with patch("requests.post") as mock_post:
+                mock_response = MagicMock()
+                mock_response.json.return_value = {
+                    "choices": [{"message": {"content": "中文翻译"}}],
+                }
+                mock_response.raise_for_status.return_value = None
+                mock_post.return_value = mock_response
 
-            result = await service.call_function("translate", "test", language="Chinese")
+                result = await service.call_function(
+                    "translate", "test", language="Chinese"
+                )
 
-            assert result == "中文翻译"
+                assert result == "中文翻译"

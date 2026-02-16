@@ -39,9 +39,9 @@ def queue_config(temp_queue_dir: Path) -> Config:
             },
         },
         "media": {"organization": "flat"},
-        "dictionary": {"enabled": False},
-        "ai": {"enabled": False},
-        "tts": {"enabled": False},
+        "dictionaries": [],
+        "ai": {"provider": "openai", "api_key": ""},
+        "tts": [],
     }
     return Config(config_dict)
 
