@@ -36,15 +36,13 @@ class TestDictionaryService:
 
         assert service.is_configured() is False
 
-    def test_is_configured_with_dictionaries(self, mock_config: Config) -> None:
+    def test_is_configured_with_dictionaries(self) -> None:
         """Test is_configured returns True with dictionaries configured."""
-        # Mock config to return dictionary list
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: (
-                [{"name": "test", "module": "test.dict"}] if key == "dictionaries" else default
-            )
-        )
-        service = DictionaryService(mock_config)
+        # Create config with dictionaries
+        from sprachspiel.config import DictionaryConfig
+
+        config = Config({"dictionaries": [{"name": "test", "module": "test.dict"}]})
+        service = DictionaryService(config)
 
         assert service.is_configured() is True
 
@@ -60,12 +58,10 @@ class TestDictionaryService:
         assert result["example"] is None
 
     @pytest.mark.asyncio
-    async def test_lookup_oxford_fallback(
-        self, mock_config: Config
-    ) -> None:
+    async def test_lookup_oxford_fallback(self) -> None:
         """Test Oxford dictionary lookup."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "dictionaries": [
                     {
                         "name": "oxford",
@@ -73,9 +69,9 @@ class TestDictionaryService:
                         "api_key": "test:secret",
                     }
                 ]
-            }.get(key, default)
+            }
         )
-        service = DictionaryService(mock_config)
+        service = DictionaryService(config)
 
         # Mock actual API call
         with patch("requests.get") as mock_get:
@@ -83,11 +79,7 @@ class TestDictionaryService:
             mock_response.json.return_value = [
                 {
                     "senses": [
-                        {
-                            "definitions": [
-                                {"definitions": [{"value": "Moving at high speed."}]}
-                            ]
-                        }
+                        {"definitions": [{"definitions": [{"value": "Moving at high speed."}]}]}
                     ]
                 }
             ]
@@ -99,10 +91,10 @@ class TestDictionaryService:
             assert result["definition"] == "Moving at high speed."
 
     @pytest.mark.asyncio
-    async def test_lookup_youdao_fallback(self, mock_config: Config) -> None:
+    async def test_lookup_youdao_fallback(self) -> None:
         """Test Youdao dictionary lookup."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "dictionaries": [
                     {
                         "name": "youdao",
@@ -110,9 +102,9 @@ class TestDictionaryService:
                         "api_key": "test_key",
                     }
                 ]
-            }.get(key, default)
+            }
         )
-        service = DictionaryService(mock_config)
+        service = DictionaryService(config)
 
         # Mock actual API call
         with patch("requests.get") as mock_get:
@@ -129,19 +121,19 @@ class TestDictionaryService:
             assert result["translation"] == "快速"
 
     @pytest.mark.asyncio
-    async def test_lookup_custom_module(self, mock_config: Config) -> None:
+    async def test_lookup_custom_module(self) -> None:
         """Test lookup with custom dictionary module."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "dictionaries": [
                     {
                         "name": "custom",
                         "module": "my_module.custom_lookup",
                     }
                 ]
-            }.get(key, default)
+            }
         )
-        service = DictionaryService(mock_config)
+        service = DictionaryService(config)
 
         # Mock custom module import
         with patch("importlib.import_module") as mock_import:
@@ -158,12 +150,10 @@ class TestDictionaryServiceErrorHandling:
     """Unit tests for DictionaryService error handling."""
 
     @pytest.mark.asyncio
-    async def test_lookup_api_failure_returns_empty(
-        self, mock_config: Config
-    ) -> None:
+    async def test_lookup_api_failure_returns_empty(self) -> None:
         """Test that API failures don't crash lookup."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "dictionaries": [
                     {
                         "name": "test",
@@ -171,9 +161,9 @@ class TestDictionaryServiceErrorHandling:
                         "api_key": "test_key",
                     }
                 ]
-            }.get(key, default)
+            }
         )
-        service = DictionaryService(mock_config)
+        service = DictionaryService(config)
 
         # Mock failed API call
         with patch("requests.get") as mock_get:
@@ -187,19 +177,19 @@ class TestDictionaryServiceErrorHandling:
             assert result["example"] is None
 
     @pytest.mark.asyncio
-    async def test_lookup_custom_module_failure(self, mock_config: Config) -> None:
+    async def test_lookup_custom_module_failure(self) -> None:
         """Test custom module failure handling."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "dictionaries": [
                     {
                         "name": "custom",
                         "module": "nonexistent.module",
                     }
                 ]
-            }.get(key, default)
+            }
         )
-        service = DictionaryService(mock_config)
+        service = DictionaryService(config)
 
         # Custom module import failures are caught and logged, returning empty result
         result = await service.lookup("test")

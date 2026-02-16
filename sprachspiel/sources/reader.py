@@ -1,17 +1,17 @@
 """Reader data source for PDF/EPUB/Text files."""
 
 from pathlib import Path
-from typing import Any
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.sources.base import BaseDataSource
+from sprachspiel.types import SourceConfig
 
 
 class ReaderDataSource(BaseDataSource):
     """Data source for reading files."""
 
-    def __init__(self, config: Config, source_config: dict[str, Any]):
+    def __init__(self, config: Config, source_config: SourceConfig):
         """Initialize reader data source.
 
         Args:
@@ -87,7 +87,9 @@ class ReaderDataSource(BaseDataSource):
 
             return text  # type: ignore
         except ImportError:
-            raise RuntimeError("ebooklib required for EPUB files. Install with: pip install ebooklib")
+            raise RuntimeError(
+                "ebooklib required for EPUB files. Install with: pip install ebooklib"
+            )
 
     def _load_text(self) -> str:
         """Load text file content.

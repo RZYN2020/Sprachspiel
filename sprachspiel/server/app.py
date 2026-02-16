@@ -12,6 +12,7 @@ from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.core.engine import CardEngine
 from sprachspiel.core.queue import CardQueue
+from sprachspiel.types import CardSummary
 
 
 # Pydantic models for API
@@ -31,7 +32,7 @@ class QueueStatusResponse(BaseModel):
     """Response model for queue status."""
 
     size: int = Field(..., description="Number of cards in queue")
-    cards: list[dict[str, Any]] = Field(..., description="List of queued cards (summary)")
+    cards: list[CardSummary] = Field(..., description="List of queued cards (summary)")
 
 
 class CardResponse(BaseModel):
@@ -146,14 +147,12 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
 
             # Handle media from request
             if request.screenshot:
-                card_data.media.screenshot = _save_base64_image(
-                    request.screenshot, config
-                )
+                card_data.media.screenshot = _save_base64_image(request.screenshot, config)
             if request.audio:
                 card_data.media.audio_word = _save_base64_audio(request.audio, config)
 
             # Check card generation mode
-            mode = config.get("card_generation.mode", "queue")
+            mode = config.card_generation.mode
 
             if mode == "real-time":
                 # Generate and push immediately
@@ -172,8 +171,8 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
                 queue.add(card_data)
 
                 # Check auto-process
-                auto_process = config.get("card_generation.queue.auto_process", False)
-                batch_size = config.get("card_generation.queue.batch_size", 10)
+                auto_process = config.card_generation.queue.auto_process
+                batch_size = config.card_generation.queue.batch_size
 
                 if auto_process and queue.size() >= batch_size:
                     success_count, total = await engine.process_queue()
@@ -189,7 +188,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
 
     @router.get("/queue/status", response_model=QueueStatusResponse)  # type: ignore[misc]
     async def get_queue_status(
-        api_key_valid: bool = Depends(verify_api_key)
+        api_key_valid: bool = Depends(verify_api_key),
     ) -> QueueStatusResponse:
         """Get queue status.
 
@@ -203,21 +202,19 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         cards = queue.get_all()
-        card_summaries: list[dict[str, Any]] = [
-            {
-                "id": card.id,
-                "word": card.word,
-                "source_type": card.metadata.source_type,
-            }
+        card_summaries: list[CardSummary] = [
+            CardSummary(
+                id=card.id,
+                word=card.word,
+                source_type=card.metadata.source_type,
+            )
             for card in cards
         ]
 
         return QueueStatusResponse(size=queue.size(), cards=card_summaries)
 
     @router.post("/queue/process")  # type: ignore[misc]
-    async def process_queue(
-        api_key_valid: bool = Depends(verify_api_key)
-    ) -> dict[str, Any]:
+    async def process_queue(api_key_valid: bool = Depends(verify_api_key)) -> dict[str, Any]:
         """Process all cards in queue.
 
         Args:
@@ -240,9 +237,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
         }
 
     @router.get("/queue/clear")  # type: ignore[misc]
-    async def clear_queue(
-        api_key_valid: bool = Depends(verify_api_key)
-    ) -> dict[str, Any]:
+    async def clear_queue(api_key_valid: bool = Depends(verify_api_key)) -> dict[str, Any]:
         """Clear all cards from queue.
 
         Args:
@@ -263,9 +258,7 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
         }
 
     @router.get("/config", response_model=ConfigResponse)  # type: ignore[misc]
-    async def get_config(
-        api_key_valid: bool = Depends(verify_api_key)
-    ) -> ConfigResponse:
+    async def get_config(api_key_valid: bool = Depends(verify_api_key)) -> ConfigResponse:
         """Get current configuration.
 
         Args:
@@ -278,15 +271,13 @@ def _setup_routes(router: APIRouter, config: Config) -> None:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         return ConfigResponse(
-            anki_mode=config.get("anki.mode", "both"),
-            card_generation_mode=config.get("card_generation.mode", "queue"),
+            anki_mode=config.anki.mode,
+            card_generation_mode=config.card_generation.mode,
             queue_size=queue.size(),
         )
 
     @router.post("/config/reload")  # type: ignore[misc]
-    async def reload_config(
-        api_key_valid: bool = Depends(verify_api_key)
-    ) -> dict[str, Any]:
+    async def reload_config(api_key_valid: bool = Depends(verify_api_key)) -> dict[str, Any]:
         """Reload configuration from file.
 
         Args:
@@ -330,10 +321,10 @@ def _save_base64_image(data: str, config: Config) -> str | None:
         decoded = base64.b64decode(image_data)
 
         # Determine format from header or config
-        format = config.get("media.screenshot_format", "png")
+        format = config.media.screenshot_format
 
         # Create media directory
-        media_dir = Path(config.get("media.storage_dir", "./media"))
+        media_dir = Path(config.media.storage_dir)
         media_dir.mkdir(parents=True, exist_ok=True)
 
         # Save file
@@ -378,11 +369,11 @@ def _save_base64_audio(data: str, config: Config) -> str | None:
         decoded = base64.b64decode(audio_data)
 
         # Create media directory
-        media_dir = Path(config.get("media.storage_dir", "./media"))
+        media_dir = Path(config.media.storage_dir)
         media_dir.mkdir(parents=True, exist_ok=True)
 
         # Save file
-        format = config.get("media.audio_format", "mp3")
+        format = config.media.audio_format
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         filename = f"audio_{timestamp}.{format}"
         filepath = media_dir / filename

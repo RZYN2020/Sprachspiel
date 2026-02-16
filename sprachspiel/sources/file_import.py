@@ -1,16 +1,18 @@
 """File import data source for CSV and text files."""
 
 from pathlib import Path
+from typing import cast
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import CardData, CardMetadata
 from sprachspiel.sources.base import BaseDataSource
+from sprachspiel.types import SourceConfig
 
 
 class FileImportSource(BaseDataSource):
     """Data source for importing from files."""
 
-    def __init__(self, config: Config, source_config: dict):
+    def __init__(self, config: Config, source_config: SourceConfig):
         """Initialize file import source.
 
         Args:
@@ -24,10 +26,9 @@ class FileImportSource(BaseDataSource):
         self.file_path = Path(path_value)
         self.import_type = source_config.get("type", "text_file")
 
-        # Load import data
         self.import_data = self._load_import_data(source_config)
 
-    def _load_import_data(self, source_config: dict) -> list:
+    def _load_import_data(self, source_config: SourceConfig) -> list:
         """Load data from file.
 
         Args:
@@ -81,8 +82,16 @@ class FileImportSource(BaseDataSource):
                     word = row[word_col].strip()
 
                     if word:
-                        context = row[context_col].strip() if context_col is not None and len(row) > context_col else ""
-                        translation = row[translation_col].strip() if translation_col is not None and len(row) > translation_col else ""
+                        context = (
+                            row[context_col].strip()
+                            if context_col is not None and len(row) > context_col
+                            else ""
+                        )
+                        translation = (
+                            row[translation_col].strip()
+                            if translation_col is not None and len(row) > translation_col
+                            else ""
+                        )
                         # Store as tuple with translation: (word, context, translation)
                         data.append((word, context, translation))
 
@@ -122,8 +131,16 @@ class FileImportSource(BaseDataSource):
                     word = row[word_col].strip()
 
                     if word:
-                        context = row[context_col].strip() if context_col is not None and len(row) > context_col else ""
-                        translation = row[translation_col].strip() if translation_col is not None and len(row) > translation_col else ""
+                        context = (
+                            row[context_col].strip()
+                            if context_col is not None and len(row) > context_col
+                            else ""
+                        )
+                        translation = (
+                            row[translation_col].strip()
+                            if translation_col is not None and len(row) > translation_col
+                            else ""
+                        )
                         # Store as tuple with translation: (word, context, translation)
                         data.append((word, context, translation))
 
@@ -256,10 +273,10 @@ class FileImporter:
             format = self.detect_format(file_path)
 
         # Build source config
-        source_config: dict = {
-            "path": str(file_path),
-            "type": format,
-        }
+        source_config: SourceConfig = cast(
+            SourceConfig,
+            {"path": str(file_path), "type": format},
+        )
 
         # Add column-specific options - auto-detect columns from first row
         if format in ("csv", "tsv"):

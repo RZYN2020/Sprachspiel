@@ -15,12 +15,13 @@ from sprachspiel.parsers.ass import ASSParser
 from sprachspiel.parsers.srt import SRTParser
 from sprachspiel.parsers.vtt import VTTParser
 from sprachspiel.sources.base import BaseDataSource
+from sprachspiel.types import SourceConfig
 
 
 class PlayerDataSource(BaseDataSource):
     """Data source for video player integration."""
 
-    def __init__(self, config: Config, source_config: dict):
+    def __init__(self, config: Config, source_config: SourceConfig):
         """Initialize player data source.
 
         Args:
@@ -36,7 +37,6 @@ class PlayerDataSource(BaseDataSource):
         self.subtitle_path = Path(subtitle_path)
         self.format = source_config.get("subtitle_format", "srt")
 
-        # Load subtitle parser
         self.parser = self._get_parser(self.format)
         self.entries = self._load_subtitles()
 

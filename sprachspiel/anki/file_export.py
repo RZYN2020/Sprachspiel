@@ -24,8 +24,8 @@ class FileExporter(BaseAnkiConnector):
             config: Configuration instance.
         """
         self.config = config
-        self.deck_name = config.get("anki.file.deck_name", "Sprachspiel")
-        self.output_dir = Path(config.get("anki.file.output_dir", "./output"))
+        self.deck_name = config.anki.file.deck_name
+        self.output_dir = Path(config.anki.file.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     async def add_note(self, card: AnkiCard) -> str:

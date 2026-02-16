@@ -35,22 +35,22 @@ class TestAnkiConnect:
         assert connector.port == 8765
         assert connector.version == 6
 
-    def test_init_with_custom_host_port(self, mock_config: Config) -> None:
+    def test_init_with_custom_host_port(self) -> None:
         """Test AnkiConnect initialization with custom host and port."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "anki.connect.host": "192.168.1.1",
-                "anki.connect.port": 8080,
-            }.get(key, default)
+        config = Config(
+            {
+                "anki": {
+                    "mode": "connect",
+                    "connect": {"host": "192.168.1.1", "port": 8080},
+                },
+            }
         )
-        connector = AnkiConnect(mock_config)
+        connector = AnkiConnect(config)
 
         assert connector.host == "192.168.1.1"
         assert connector.port == 8080
 
-    def test_check_connection_success(
-        self, mock_anki_connect: AnkiConnect
-    ) -> None:
+    def test_check_connection_success(self, mock_anki_connect: AnkiConnect) -> None:
         """Test successful connection check."""
         with patch("requests.post") as mock_post:
             mock_response = MagicMock()
@@ -62,9 +62,7 @@ class TestAnkiConnect:
 
             assert result is True
 
-    def test_check_connection_failure(
-        self, mock_anki_connect: AnkiConnect
-    ) -> None:
+    def test_check_connection_failure(self, mock_anki_connect: AnkiConnect) -> None:
         """Test failed connection check."""
         with patch("requests.post") as mock_post:
             mock_post.side_effect = Exception("Connection failed")
@@ -180,16 +178,12 @@ class TestAnkiConnect:
             assert result is True
 
     @pytest.mark.asyncio
-    async def test_add_note_with_api_key(
-        self, mock_config: Config
-    ) -> None:
+    async def test_add_note_with_api_key(self) -> None:
         """Test adding note with API key authentication."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "anki.connect.api_key": "test_api_key"
-            }.get(key, default)
+        config = Config(
+            {"anki": {"mode": "connect", "connect": {"host": "localhost", "port": 8765}}}
         )
-        connector = AnkiConnect(mock_config)
+        connector = AnkiConnect(config)
 
         card = AnkiCard(
             deck_name="Test",
@@ -212,9 +206,7 @@ class TestAnkiConnect:
             assert mock_post.called
 
     @pytest.mark.asyncio
-    async def test_add_note_retry_on_failure(
-        self, mock_anki_connect: AnkiConnect
-    ) -> None:
+    async def test_add_note_retry_on_failure(self, mock_anki_connect: AnkiConnect) -> None:
         """Test retry logic on failed requests."""
         call_count = 0
 
@@ -256,15 +248,17 @@ class TestFileExporter:
 
         assert exporter.config is mock_config
 
-    def test_export_cards(self, mock_config: Config) -> None:
+    def test_export_cards(self) -> None:
         """Test exporting cards to .apkg file."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "anki.file.output_dir": "/tmp/output",
-                "anki.file.deck_name": "Test Deck",
-            }.get(key, default)
+        config = Config(
+            {
+                "anki": {
+                    "mode": "file",
+                    "file": {"output_dir": "/tmp/output", "deck_name": "Test Deck"},
+                },
+            }
         )
-        exporter = FileExporter(mock_config)
+        exporter = FileExporter(config)
 
         cards = [
             AnkiCard(

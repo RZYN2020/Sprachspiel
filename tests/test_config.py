@@ -21,6 +21,7 @@ from sprachspiel.config import (
 
 # ==================== Strong-typed Configuration Tests ====================
 
+
 def test_sprachspiel_config_defaults():
     """Test default configuration model creation."""
     config = SprachspielConfig()
@@ -61,21 +62,6 @@ def test_config_immutable():
 
 # ==================== Backward Compatibility Tests ====================
 
-def test_default_config_creation():
-    """Test default config creation."""
-    config = Config()
-
-    assert config.get("anki.mode") == "both"
-    assert config.get("card_generation.mode") == "queue"
-
-
-def test_config_get():
-    """Test getting config values."""
-    config = Config()
-
-    assert config.get("anki.mode") == "both"
-    assert config.get("nonexistent.key", "default") == "default"
-
 
 def test_config_strong_typed_access():
     """Test strong-typed property access."""
@@ -86,46 +72,6 @@ def test_config_strong_typed_access():
     assert config.anki.connect.host == "localhost"
     assert config.card_generation.mode == "queue"
     assert config.ai.provider == "openai"
-
-
-def test_config_set():
-    """Test setting config values."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("""anki:
-  mode: connect
-  connect:
-    host: localhost
-    port: 8765
-  file:
-    output_dir: ./output
-    deck_name: Sprachspiel
-card_generation:
-  mode: queue
-media:
-  organization: hierarchical
-""")
-
-    config = Config(Path(f.name))
-    assert config.get("anki.mode") == "connect"
-    assert config.anki.mode == "connect"
-
-    config.set("anki.mode", "file")
-    assert config.get("anki.mode") == "file"
-    assert config.anki.mode == "file"
-
-    # Cleanup
-    Path(f.name).unlink()
-
-
-def test_config_validation_valid_mode():
-    """Test config validation with valid Anki mode."""
-    config = Config()
-
-    # Valid modes
-    for mode in ["connect", "file", "both"]:
-        config.set("anki.mode", mode)
-        assert config.get("anki.mode") == mode
-        assert config.anki.mode == mode
 
 
 def test_config_from_dict():
@@ -142,6 +88,7 @@ def test_config_from_dict():
 
     assert config.anki.mode == "file"
     assert config.anki.file.output_dir == "./my_output"
+    # Provider should be "anthropic" as specified in config_dict
     assert config.ai.provider == "anthropic"
     assert config.ai.api_key == "test-key"
 
@@ -157,19 +104,19 @@ def test_config_model_dump():
 
 # ==================== Save/Load Integration Tests ====================
 
+
 def test_config_save_and_load():
     """Test saving and loading configuration."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         temp_path = Path(f.name)
 
     try:
-        # Create and customize config
-        config = Config()
-        config.set("anki.mode", "file")
-        config.set("anki.file.deck_name", "Test Deck")
-        config.set("ai.provider", "anthropic")
-
-        # Save to temp file
+        # Create config with custom values via dict
+        config_dict = {
+            "anki": {"mode": "file", "file": {"deck_name": "Test Deck"}},
+            "ai": {"provider": "anthropic", "api_key": "test-key"},
+        }
+        config = Config(config_dict)
         config.config_path = temp_path
         config.save()
 

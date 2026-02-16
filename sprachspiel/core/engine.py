@@ -16,6 +16,9 @@ else:
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
 from sprachspiel.core.mapper import FieldMapper
+from sprachspiel.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class CardEngine:
@@ -82,7 +85,7 @@ class CardEngine:
                 card_data.definition = dict_result.get("definition")
                 card_data.example = dict_result.get("example")
             except Exception as e:
-                print(f"Dictionary lookup failed: {e}")
+                logger.warning(f"Dictionary lookup failed: {e}")
 
         # Enhancement: AI functions
         if self.ai.is_configured():
@@ -115,7 +118,7 @@ class CardEngine:
                         card_data.custom_data[func_name] = result
 
             except Exception as e:
-                print(f"AI enhancement failed: {e}")
+                logger.warning(f"AI enhancement failed: {e}")
 
         # Enhancement: TTS
         if self.tts.is_configured():
@@ -124,7 +127,7 @@ class CardEngine:
                 audio_word = await self.tts.synthesize(card_data.word)
                 card_data.media.audio_word = audio_word
             except Exception as e:
-                print(f"TTS synthesis failed: {e}")
+                logger.warning(f"TTS synthesis failed: {e}")
 
         # Map to Anki fields
         anki_card = self.mapper.map_card(card_data)
@@ -157,7 +160,7 @@ class CardEngine:
             try:
                 await connector.add_note(card)
             except Exception as e:
-                print(f"Failed to push card via {connector.__class__.__name__}: {e}")
+                logger.error(f"Failed to push card via {connector.__class__.__name__}: {e}")
                 success = False
 
         return success
@@ -187,7 +190,7 @@ class CardEngine:
             return (0, 0)
 
         # Get batch size
-        batch_size = self.config.get("card_generation.queue.batch_size", 10)
+        batch_size = self.config.card_generation.queue.batch_size
 
         # Process in batches
         total = queue.size()

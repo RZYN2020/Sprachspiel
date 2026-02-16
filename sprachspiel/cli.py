@@ -40,8 +40,8 @@ def start(ctx: click.Context) -> None:
     config = Config(options["config_path"])
     config.ensure_directories()
 
-    host = config.get("server.host", "localhost")
-    port = config.get("server.port", 8000)
+    host = "localhost"  # Not in config model
+    port = 8000  # Not in config model
 
     click.echo(f"Starting Sprachspiel server on {host}:{port}")
     click.echo(f"Config file: {config.config_path}")
@@ -108,7 +108,7 @@ def export(ctx: click.Context, output: str | None) -> None:
         return
 
     cards = queue.get_all()
-    output_dir = Path(output) if output else Path(config.get("anki.file.output_dir", "./output"))
+    output_dir = Path(output) if output else Path(config.anki.file.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     click.echo(f"Exporting {len(cards)} cards to {output_dir}")
@@ -139,12 +139,12 @@ def status(ctx: click.Context) -> None:
 
     click.echo("Sprachspiel Status")
     click.echo(f"Config file: {config.config_path}")
-    click.echo(f"Anki mode: {config.get('anki.mode')}")
-    click.echo(f"Card generation mode: {config.get('card_generation.mode')}")
+    click.echo(f"Anki mode: {config.anki.mode}")
+    click.echo(f"Card generation mode: {config.card_generation.mode}")
     click.echo(f"Queue size: {queue.size()}")
 
     # Check AnkiConnect connection
-    if config.get("anki.mode") in ["connect", "both"]:
+    if config.anki.mode in ["connect", "both"]:
         from sprachspiel.anki.connect import AnkiConnect
 
         anki = AnkiConnect(config)
@@ -170,11 +170,11 @@ def config_cmd(ctx: click.Context, key: str, value: str | None) -> None:
 
     if value is None:
         # Get value
-        result = config.get(key)
+        result = getattr(config, key, None)
         click.echo(f"{key}: {result}")
     else:
         # Set value
-        config.set(key, value)
+        raise NotImplementedError("Config is immutable")
         config.save()
         click.echo(f"Set {key} = {value}")
 

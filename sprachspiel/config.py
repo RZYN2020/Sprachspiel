@@ -118,9 +118,10 @@ class MediaConfig(BaseModel):
 class DictionaryConfig(BaseModel):
     """Dictionary service configuration."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="allow")
 
     name: str
+    module: str | None = None
     enabled: bool = True
     api_key: str | None = None
     base_url: str | None = None
@@ -130,9 +131,10 @@ class DictionaryConfig(BaseModel):
 class TTSConfig(BaseModel):
     """TTS service configuration."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="allow")
 
     name: str
+    module: str | None = None
     enabled: bool = True
     api_key: str | None = None
     base_url: str | None = None
@@ -331,59 +333,6 @@ class Config:
                 f"Invalid media organization: {organization}. Must be 'flat' or 'hierarchical'"
             )
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value (backward-compatible).
-
-        Args:
-            key: Configuration key in dot notation (e.g., "anki.mode")
-            default: Default value if key not found
-
-        Returns:
-            Configuration value or default.
-        """
-        # Direct attribute access on model
-        parts = key.split(".")
-        value: Any = self._model
-
-        for part in parts:
-            if isinstance(value, BaseModel):
-                value = getattr(value, part, None)
-            elif isinstance(value, dict):
-                value = value.get(part)
-            else:
-                return default
-
-            if value is None:
-                return default
-
-        return value
-
-    def set(self, key: str, value: Any) -> None:
-        """Set configuration value.
-
-        Note: Since config is now immutable (frozen), this creates a new model.
-        This method is kept for backward compatibility.
-
-        Args:
-            key: Configuration key in dot notation (e.g., "anki.mode")
-            value: Value to set
-        """
-        parts = key.split(".")
-        raw_data = self._model.model_dump()
-
-        # Navigate to the nested dict
-        current = raw_data
-        for part in parts[:-1]:
-            if part not in current:
-                current[part] = {}
-            current = current[part]
-
-        # Set the value
-        current[parts[-1]] = value
-
-        # Re-create the model
-        self._model = SprachspielConfig.model_validate(raw_data)
-
     def reload(self) -> None:
         """Reload configuration from file."""
         self._model = self._load_config()
@@ -405,12 +354,12 @@ class Config:
         QUEUE_DIR.mkdir(parents=True, exist_ok=True)
 
         # Create media directory
-        media_dir = Path(self.get("media.storage_dir", "./media"))
+        media_dir = Path(self.media.storage_dir)
         media_dir.mkdir(parents=True, exist_ok=True)
 
         # Create output directory for file export
-        if self.get("anki.mode") in ["file", "both"]:
-            output_dir = Path(self.get("anki.file.output_dir", "./output"))
+        if self.anki.mode in ["file", "both"]:
+            output_dir = Path(self.anki.file.output_dir)
             output_dir.mkdir(parents=True, exist_ok=True)
 
     # ==================== Strongly-typed property accessors ====================

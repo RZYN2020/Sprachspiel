@@ -27,19 +27,18 @@ async def demonstrate_batch_processing() -> None:
     config_dict = {
         "anki": {
             "mode": "file",
-            "deck": "Vocabulary Deck",
-            "model": "Basic (and reversed card)",
-        },
-        "card_generation": {
-            "mode": "queue",  # Queue mode for batch processing
+            "file": {"deck_name": "Vocabulary Deck"},
             "field_mapping": {
                 "front": "${word}",
                 "back": "${translation}",
             },
         },
-        "dictionary": {"enabled": False},
-        "ai": {"enabled": False},
-        "tts": {"enabled": False},
+        "card_generation": {
+            "mode": "queue",  # Queue mode for batch processing
+        },
+        "dictionaries": [],
+        "ai": {"provider": "openai", "api_key": ""},
+        "tts": [],
     }
 
     config = Config(config_dict)
@@ -108,9 +107,15 @@ async def demonstrate_batch_processing() -> None:
     # Demonstrate saving and loading queue
     print(f"\n6. Demonstrating queue persistence...")
     # Add a card back for demo
-    queue.add(CardData(word="Demo", context="Demo card", metadata=CardMetadata(
-        source_type="demo", source_name="demo", created_at=datetime.now(UTC)
-    )))
+    queue.add(
+        CardData(
+            word="Demo",
+            context="Demo card",
+            metadata=CardMetadata(
+                source_type="demo", source_name="demo", created_at=datetime.now(UTC)
+            ),
+        )
+    )
     queue.save()
     print(f"   Queue saved to: {queue.queue_file}")
 

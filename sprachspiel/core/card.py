@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from sprachspiel.types import CardDict, MediaDict, CardMetadataDict
+
 
 @dataclass
 class Media:
@@ -43,15 +45,17 @@ class CardData:
     media: Media = field(default_factory=Media)
 
     # Metadata
-    metadata: CardMetadata = field(default_factory=lambda: CardMetadata(source_type="unknown", source_name="unknown"))
+    metadata: CardMetadata = field(
+        default_factory=lambda: CardMetadata(source_type="unknown", source_name="unknown")
+    )
 
     # Custom data (from AI functions, etc.)
-    custom_data: dict[str, Any] = field(default_factory=dict)
+    custom_data: dict[str, str] = field(default_factory=dict)
 
     # Unique identifier
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> CardDict:
         """Convert card to dictionary.
 
         Returns:
@@ -80,7 +84,7 @@ class CardData:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "CardData":
+    def from_dict(cls, data: CardDict) -> "CardData":
         """Create card from dictionary.
 
         Args:
@@ -94,8 +98,8 @@ class CardData:
 
         return cls(
             id=data.get("id", str(uuid.uuid4())),
-            word=data["word"],
-            context=data["context"],
+            word=data.get("word", ""),
+            context=data.get("context", ""),
             translation=data.get("translation"),
             definition=data.get("definition"),
             example=data.get("example"),
@@ -109,7 +113,9 @@ class CardData:
                 source_type=metadata_data.get("source_type", "unknown"),
                 source_name=metadata_data.get("source_name", "unknown"),
                 position=metadata_data.get("position"),
-                created_at=datetime.fromisoformat(metadata_data.get("created_at", datetime.now(UTC).isoformat()))
+                created_at=datetime.fromisoformat(
+                    metadata_data.get("created_at", datetime.now(UTC).isoformat())
+                )
                 if metadata_data.get("created_at")
                 else datetime.now(UTC),
             ),

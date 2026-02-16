@@ -1,8 +1,13 @@
 """Dictionary service for word lookups."""
 
-from typing import Any
+from typing import Any, cast
 
-from sprachspiel.config import Config
+from sprachspiel.config import Config, DictionaryConfig
+from sprachspiel.exceptions import DictionaryError
+from sprachspiel.logging_config import get_logger
+from sprachspiel.types import DictionaryResult
+
+logger = get_logger(__name__)
 
 
 class DictionaryService:
@@ -15,7 +20,7 @@ class DictionaryService:
             config: Configuration instance.
         """
         self.config = config
-        self.dictionaries = config.get("dictionaries", [])
+        self.dictionaries = config.dictionaries
 
     def is_configured(self) -> bool:
         """Check if dictionary service is configured.
@@ -25,7 +30,7 @@ class DictionaryService:
         """
         return len(self.dictionaries) > 0
 
-    async def lookup(self, word: str) -> dict[str, Any]:
+    async def lookup(self, word: str) -> DictionaryResult:
         """Look up word in configured dictionaries.
 
         Args:
@@ -34,24 +39,30 @@ class DictionaryService:
         Returns:
             Dictionary with translation, definition, example.
         """
-        result = {"translation": None, "definition": None, "example": None}
+        result: DictionaryResult = {
+            "translation": None,
+            "definition": None,
+            "example": None,
+        }
 
         for dict_config in self.dictionaries:
             try:
                 dict_result = await self._lookup_dictionary(word, dict_config)
 
                 # Use first successful result (any non-empty field qualifies)
-                if dict_result.get("translation") or dict_result.get("definition") or dict_result.get("example"):
-                    result.update(dict_result)
+                if (
+                    dict_result.get("translation")
+                    or dict_result.get("definition")
+                    or dict_result.get("example")
+                ):
+                    result.update(cast(DictionaryResult, dict_result))
                     break
             except Exception as e:
-                print(f"Dictionary lookup failed for {dict_config.get('name')}: {e}")
+                logger.warning(f"Dictionary lookup failed for {dict_config.name}: {e}")
 
         return result
 
-    async def _lookup_dictionary(
-        self, word: str, dict_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _lookup_dictionary(self, word: str, dict_config: DictionaryConfig) -> dict[str, Any]:
         """Look up word in specific dictionary.
 
         Args:
@@ -61,7 +72,7 @@ class DictionaryService:
         Returns:
             Dictionary with translation, definition, example.
         """
-        module_name = dict_config.get("module")
+        module_name = dict_config.module
 
         # Built-in dictionaries
         result = {"translation": None, "definition": None, "example": None}
@@ -76,9 +87,7 @@ class DictionaryService:
 
         return result
 
-    async def _lookup_custom(
-        self, word: str, dict_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _lookup_custom(self, word: str, dict_config: DictionaryConfig) -> dict[str, Any]:
         """Look up word using custom dictionary module.
 
         Args:
@@ -88,7 +97,7 @@ class DictionaryService:
         Returns:
             Dictionary with translation, definition, example.
         """
-        module_name = dict_config.get("module")
+        module_name = dict_config.module
 
         try:
             # Import custom module
@@ -106,9 +115,7 @@ class DictionaryService:
         except Exception as e:
             raise RuntimeError(f"Failed to load custom dictionary {module_name}: {e}") from e
 
-    async def _lookup_oxford(
-        self, word: str, dict_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _lookup_oxford(self, word: str, dict_config: DictionaryConfig) -> dict[str, Any]:
         """Look up word in Oxford dictionary.
 
         Args:
@@ -120,7 +127,7 @@ class DictionaryService:
         """
         import requests
 
-        api_key = dict_config.get("api_key")
+        api_key = dict_config.api_key
         if not api_key:
             return {}
 
@@ -162,9 +169,7 @@ class DictionaryService:
 
         return result
 
-    async def _lookup_youdao(
-        self, word: str, dict_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _lookup_youdao(self, word: str, dict_config: DictionaryConfig) -> dict[str, Any]:
         """Look up word in Youdao dictionary.
 
         Args:
@@ -176,7 +181,7 @@ class DictionaryService:
         """
         import requests
 
-        api_key = dict_config.get("api_key")
+        api_key = dict_config.api_key
         if not api_key:
             return {}
 

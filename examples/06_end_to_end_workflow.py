@@ -133,8 +133,9 @@ Buch,book,Ein Gegenstand,Das Buch ist interessant.
                 "deck": "German Vocabulary",
                 "model": "Basic (and reversed card)",
             },
-            "card_generation": {
-                "mode": "realtime",
+            "anki": {
+                "mode": "file",
+                "file": {"deck_name": "Vocabulary Deck"},
                 "field_mapping": {
                     "German": "${word}",
                     "English": "${translation}",
@@ -142,9 +143,12 @@ Buch,book,Ein Gegenstand,Das Buch ist interessant.
                     "Full": "${word} = ${translation}",
                 },
             },
-            "dictionary": {"enabled": False},
-            "ai": {"enabled": False},
-            "tts": {"enabled": False},
+            "card_generation": {
+                "mode": "real-time",
+            },
+            "dictionaries": [],
+            "ai": {"provider": "openai", "api_key": ""},
+            "tts": [],
         }
         engine_config = Config(engine_config_dict)
         engine = CardEngine(engine_config)
@@ -165,6 +169,8 @@ Buch,book,Ein Gegenstand,Das Buch ist interessant.
                 anki_card = await engine.generate_card(card_data)
                 anki_cards.append(anki_card)
                 print(f"  ✓ {anki_card.fields.get('German', 'N/A')}")
+
+            fresh_queue.remove_batch([card.id for card in batch])
 
         print(f"\nGenerated {len(anki_cards)} Anki cards")
 

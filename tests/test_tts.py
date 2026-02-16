@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sprachspiel.config import Config
+from sprachspiel.exceptions import TTSError
 from sprachspiel.services.tts import TTSService
 
 
@@ -34,47 +35,38 @@ class TestTTSService:
         assert isinstance(service.media_dir, Path)
         assert isinstance(service.audio_format, str)
 
-    def test_is_configured_with_empty_list(
-        self, mock_tts_service: TTSService
-    ) -> None:
+    def test_is_configured_with_empty_list(self, mock_tts_service: TTSService) -> None:
         """Test is_configured returns False with no providers."""
         assert mock_tts_service.is_configured() is False
 
-    def test_is_configured_with_with_providers(self, mock_config: Config) -> None:
+    def test_is_configured_with_with_providers(self) -> None:
         """Test is_configured returns True with providers configured."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "tts": [{"name": "test", "module": "tts.test"}],
-                "media.storage_dir": "/tmp/media",
-            }.get(key, default)
+                "media": {"storage_dir": "/tmp/media"},
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         assert service.is_configured() is True
 
     @pytest.mark.asyncio
-    async def test_synthesize_no_provider_raises_error(
-        self, mock_tts_service: TTSService
-    ) -> None:
-        """Test synthesize with no provider raises RuntimeError."""
-        with pytest.raises(RuntimeError, match="No TTS provider configured"):
+    async def test_synthesize_no_provider_raises_error(self, mock_tts_service: TTSService) -> None:
+        """Test synthesize with no provider raises TTSError."""
+        with pytest.raises(TTSError, match="No TTS provider configured"):
             await mock_tts_service.synthesize("test")
 
     @pytest.mark.asyncio
-    async def test_synthesize_google_translate(
-        self, mock_config: Config
-    ) -> None:
+    async def test_synthesize_google_translate(self) -> None:
         """Test Google Translate TTS synthesis."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "tts": [
-                    {"name": "google", "module": "google_translate", "voice": "en-US"}
-                ],
-                "media.storage_dir": "/tmp/media",
-                "media.audio_format": "mp3",
-            }.get(key, default)
+        config = Config(
+            {
+                "tts": [{"name": "google", "module": "google_translate", "voice": "en-US"}],
+                "media": {"storage_dir": "/tmp/media", "audio_format": "mp3"},
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         # Mock the requests.get call
         with patch("requests.get") as mock_get:
@@ -88,17 +80,15 @@ class TestTTSService:
             assert "hello" in result
 
     @pytest.mark.asyncio
-    async def test_synthesize_with_voice_override(
-        self, mock_config: Config
-    ) -> None:
+    async def test_synthesize_with_voice_override(self) -> None:
         """Test synthesis with voice override."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "tts": [{"name": "google", "module": "google_translate", "voice": "en-GB"}],
-                "media.storage_dir": "/tmp/media",
-            }.get(key, default)
+                "media": {"storage_dir": "/tmp/media"},
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         with patch("requests.get") as mock_get:
             mock_response = MagicMock()
@@ -116,19 +106,15 @@ class TestTTSService:
                 assert call_args.kwargs.get("voice") == "en-US"
 
     @pytest.mark.asyncio
-    async def test_synthesize_custom_module(
-        self, mock_config: Config
-    ) -> None:
+    async def test_synthesize_custom_module(self) -> None:
         """Test synthesis with custom TTS module."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
-                "tts": [
-                    {"name": "custom", "module": "my_module.custom_tts"}
-                ],
-                "media.storage_dir": "/tmp/media",
-            }.get(key, default)
+        config = Config(
+            {
+                "tts": [{"name": "custom", "module": "my_module.custom_tts"}],
+                "media": {"storage_dir": "/tmp/media"},
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         # Mock custom module - returns a path that will be returned directly
         with patch("importlib.import_module") as mock_import:
@@ -143,9 +129,7 @@ class TestTTSService:
             assert result == "/tmp/media/test.mp3"
 
     @pytest.mark.asyncio
-    async def test_synthesize_context_short_text(
-        self, mock_tts_service: TTSService
-    ) -> None:
+    async def test_synthesize_context_short_text(self, mock_tts_service: TTSService) -> None:
         """Test context synthesis with short text."""
         with patch.object(
             mock_tts_service, "synthesize", AsyncMock(return_value="/path/to/audio.mp3")
@@ -155,9 +139,7 @@ class TestTTSService:
             assert result == "/path/to/audio.mp3"
 
     @pytest.mark.asyncio
-    async def test_synthesize_context_long_text(
-        self, mock_tts_service: TTSService
-    ) -> None:
+    async def test_synthesize_context_long_text(self, mock_tts_service: TTSService) -> None:
         """Test context synthesis returns None for long text."""
         with patch.object(
             mock_tts_service, "synthesize", AsyncMock(return_value="/path/to/audio.mp3")
@@ -174,40 +156,36 @@ class TestTTSServiceErrorHandling:
     """Unit tests for TTSService error handling."""
 
     @pytest.mark.asyncio
-    async def test_synthesize_all_providers_fail(
-        self, mock_config: Config
-    ) -> None:
+    async def test_synthesize_all_providers_fail(self) -> None:
         """Test when all TTSTS providers fail."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "tts": [
                     {"name": "test1", "module": "google_translate"},
                     {"name": "test2", "module": "google_translate"},
                 ],
-            }.get(key, default)
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         with patch("requests.get") as mock_get:
             mock_get.side_effect = Exception("API error")
 
-            with pytest.raises(RuntimeError, match="All TTS providers failed"):
+            with pytest.raises(TTSError, match="All TTS providers failed"):
                 await service.synthesize("test")
 
     @pytest.mark.asyncio
-    async def test_synthesize_fallback_to_second_provider(
-        self, mock_config: Config
-    ) -> None:
+    async def test_synthesize_fallback_to_second_provider(self) -> None:
         """Test fallback to second provider when first fails."""
-        mock_config.get = MagicMock(  # type: ignore[method-assign]
-            side_effect=lambda key, default=None: {
+        config = Config(
+            {
                 "tts": [
                     {"name": "failing", "module": "google_translate"},
                     {"name": "working", "module": "google_translate"},
                 ],
-            }.get(key, default)
+            }
         )
-        service = TTSService(mock_config)
+        service = TTSService(config)
 
         call_count = 0
 
@@ -235,7 +213,7 @@ class TestTTSServiceErrorHandling:
         service = TTSService(mock_config)
 
         # Test the internal _synthesize_azure method directly
-        with pytest.raises(
-            NotImplementedError, match="azure-cognitiveservices-speech"
-        ):
-            await service._synthesize_azure("test", {}, None)
+        from sprachspiel.config import TTSConfig
+
+        with pytest.raises(NotImplementedError, match="azure-cognitiveservices-speech"):
+            await service._synthesize_azure("test", TTSConfig(name="azure"), None)

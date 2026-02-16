@@ -20,9 +20,9 @@ class AnkiConnect(BaseAnkiConnector):
             config: Configuration instance.
         """
         self.config = config
-        self.host = config.get("anki.connect.host", "localhost")
-        self.port = config.get("anki.connect.port", 8765)
-        self.api_key = config.get("anki.connect.api_key")
+        self.host = config.anki.connect.host
+        self.port = config.anki.connect.port
+        self.api_key = None  # Not in current config model
         self.url = f"http://{self.host}:{self.port}"
         self.version = 6  # AnkiConnect API version
 

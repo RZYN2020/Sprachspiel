@@ -29,23 +29,21 @@ async def create_basic_card() -> None:
     config_dict = {
         "anki": {
             "mode": "file",  # Use file export mode for this example
-            "deck": "Example Deck",
-            "model": "Basic",
+            "file": {"deck_name": "Example Deck"},
         },
         "card_generation": {
-            "mode": "realtime",
-            "field_mapping": {
-                "front": "${word}",
-                "back": "${translation}\n\n${definition}",
-            },
+            "mode": "queue",  # Use queue mode for predictable behavior
         },
         # Services are not configured in this example
-        "dictionary": {"enabled": False},
-        "ai": {"enabled": False},
-        "tts": {"enabled": False},
+        "ai": {"api_key": ""},  # Empty API key = disabled
     }
 
     config = Config(config_dict)
+
+    # Strong-typed configuration access
+    print(f"Anki mode: {config.anki.mode}")
+    print(f"Deck name: {config.anki.file.deck_name}")
+
     engine = CardEngine(config)
 
     # Create a CardData object
@@ -79,7 +77,11 @@ async def create_basic_card() -> None:
 
     print(f"\n4. Fields:")
     for field_name, field_value in anki_card.fields.items():
-        print(f"   {field_name}: {field_value[:50]}..." if len(field_value) > 50 else f"   {field_name}: {field_value}")
+        print(
+            f"   {field_name}: {field_value[:50]}..."
+            if len(field_value) > 50
+            else f"   {field_name}: {field_value}"
+        )
 
     print(f"\n5. Media files:")
     print(f"   Audio: {anki_card.audio_files}")

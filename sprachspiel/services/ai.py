@@ -3,6 +3,9 @@
 from typing import Any
 
 from sprachspiel.config import Config
+from sprachspiel.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class AIService:
@@ -15,23 +18,13 @@ class AIService:
             config: Configuration instance.
         """
         self.config = config
-        # Support both strong-typed and dict-style config access for backward compatibility
-        # Try strong-typed first, fall back to get() method for testing scenarios
-        try:
-            ai_config = config.ai
-            self.provider = ai_config.provider
-            self.api_key = ai_config.api_key
-            self.base_url = ai_config.base_url
-            self.model = ai_config.model
-            # Convert Pydantic models to dict for backward compatibility
-            self.functions = {k: {"prompt": v.prompt} for k, v in ai_config.functions.items()}
-        except (AttributeError, TypeError):
-            # Fall back to dict-style access for testing with mocks
-            self.provider = config.get("ai.provider", "openai")
-            self.api_key = config.get("ai.api_key", "")
-            self.base_url = config.get("ai.base_url", "https://api.openai.com/v1")
-            self.model = config.get("ai.model", "gpt-4o-mini")
-            self.functions = config.get("ai.functions", {})
+        ai_config = config.ai
+        self.provider = ai_config.provider
+        self.api_key = ai_config.api_key
+        self.base_url = ai_config.base_url
+        self.model = ai_config.model
+        # Convert Pydantic models to dict for internal use
+        self.functions = {k: {"prompt": v.prompt} for k, v in ai_config.functions.items()}
 
     def is_configured(self) -> bool:
         """Check if AI service is configured.
@@ -88,7 +81,7 @@ class AIService:
         try:
             return await self._call_api(prompt)
         except Exception as e:
-            print(f"AI function {name} failed: {e}")
+            logger.warning(f"AI function {name} failed: {e}")
             raise
 
     async def _call_api(self, prompt: str) -> str:

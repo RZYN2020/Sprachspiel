@@ -1,6 +1,7 @@
 """Tests for data sources."""
 
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -11,6 +12,7 @@ from sprachspiel.sources.base import BaseDataSource
 from sprachspiel.sources.file_import import FileImportSource
 from sprachspiel.sources.player import PlayerDataSource
 from sprachspiel.sources.reader import ReaderDataSource
+from sprachspiel.types import SourceConfig
 
 
 @pytest.fixture
@@ -60,7 +62,7 @@ class TestFileImportSource:
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("word1,context1\nword2,context2\n")
 
-        config = {
+        config: SourceConfig = {
             "path": str(csv_file),
             "type": "csv",
             "columns": {"word": 0, "context": 1},
@@ -74,7 +76,7 @@ class TestFileImportSource:
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("word1\nword2\nword3\n")
 
-        config = {
+        config: SourceConfig = {
             "path": str(txt_file),
             "type": "text",
             "one_word_per_line": True,
@@ -89,7 +91,7 @@ class TestFileImportSource:
         csv_file = tmp_path / "test.csv"
         csv_file.write_text("word1,context1\nword2,context2\n")
 
-        config = {
+        config: SourceConfig = {
             "path": str(csv_file),
             "type": "csv",
             "columns": {"word": 0, "context": 1},
@@ -107,7 +109,7 @@ class TestFileImportSource:
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("word1\nword2\nword3\n")
 
-        config = {
+        config: SourceConfig = {
             "path": str(txt_file),
             "type": "text",
             "one_word_per_line": True,
@@ -127,7 +129,7 @@ class TestPlayerDataSourceReader:
 
     def test_init_with_video_config(self, mock_config: Config) -> None:
         """Test player data source initialization."""
-        config = {
+        config: SourceConfig = {
             "video_path": "/path/to/video.mp4",
             "subtitle_path": "/path/to/subtitle.srt",
             "subtitle_format": "srt",
@@ -140,7 +142,7 @@ class TestPlayerDataSourceReader:
 
     def test_get_card_data(self, mock_config: Config) -> None:
         """Test getting card data from player."""
-        config = {
+        config: SourceConfig = {
             "video_path": "/path/to/video.mp4",
             "subtitle_path": "/path/to/subtitle.srt",
         }
@@ -154,14 +156,12 @@ class TestPlayerDataSourceReader:
 
     def test_find_context_for_word(self, tmp_path: Path, mock_config: Config) -> None:
         """Test finding context for word."""
-        # Create a real subtitle file
         subtitle_file = tmp_path / "subtitle.srt"
-        subtitle_file.write_text("""1
-00:01:23,000 --> 00:01:28,000
-The quick brown fox jumps over lazy dog.
-""")
+        subtitle_file.write_text(
+            "1\n00:00:01,000 --> 00:00:04,000\nThe quick brown fox jumps over the lazy dog.\n\n"
+        )
 
-        config = {
+        config: SourceConfig = {
             "video_path": "/path/to/video.mp4",
             "subtitle_path": str(subtitle_file),
         }
@@ -185,12 +185,11 @@ class TestReaderDataSource:
         Note: PDF parsing requires pypdf and a valid PDF file.
         This test mocks the PDF loading to verify the configuration is stored correctly.
         """
-        config = {
+        config: SourceConfig = {
             "file_path": "/path/to/file.pdf",
             "type": "pdf",
         }
 
-        # PDF loading requires pypdf, so we mock _load_content to avoid the dependency
         with patch.object(ReaderDataSource, "_load_content", return_value="PDF mock content"):
             source = ReaderDataSource(mock_config, config)
 
@@ -203,12 +202,11 @@ class TestReaderDataSource:
         Note: EPUB parsing requires ebooklib and a valid EPUB file.
         This test mocks the EPUB loading to verify the configuration is stored correctly.
         """
-        config = {
+        config: SourceConfig = {
             "file_path": "/path/to/file.epub",
             "type": "epub",
         }
 
-        # EPUB loading requires ebooklib, so we mock _load_content to avoid the dependency
         with patch.object(ReaderDataSource, "_load_content", return_value="EPUB mock content"):
             source = ReaderDataSource(mock_config, config)
 
@@ -220,7 +218,7 @@ class TestReaderDataSource:
         text_file = tmp_path / "file.txt"
         text_file.write_text("Text content")
 
-        config = {
+        config: SourceConfig = {
             "file_path": str(text_file),
             "type": "text",
         }
@@ -234,12 +232,11 @@ class TestReaderDataSource:
 
         Note: This test mocks the PDF loading to avoid the pypdf dependency.
         """
-        config = {
+        config: SourceConfig = {
             "file_path": "/path/to/file.pdf",
             "type": "pdf",
         }
 
-        # Mock _load_content to avoid pypdf dependency
         with patch.object(ReaderDataSource, "_load_content", return_value="PDF content text"):
             source = ReaderDataSource(mock_config, config)
 
@@ -252,7 +249,7 @@ class TestReaderDataSource:
         text_file = tmp_path / "file.txt"
         text_file.write_text("The word example is in this sentence.")
 
-        config = {
+        config: SourceConfig = {
             "file_path": str(text_file),
             "type": "text",
         }

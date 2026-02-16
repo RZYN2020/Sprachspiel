@@ -2,12 +2,14 @@
 
 import re
 from pathlib import Path
-from typing import Any
-
-from pydantic import BaseModel
+from typing import Any, cast
 
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
+from sprachspiel.logging_config import get_logger
+from sprachspiel.types import VariableContext
+
+logger = get_logger(__name__)
 
 
 class TemplateError(Exception):
@@ -33,14 +35,7 @@ class FieldMapper:
         self.config = config
         # Support both old and new config locations for backward compatibility
         # Use strong-typed model access with fallback to get() method
-        field_mapping_value = config.get("card_generation.field_mapping") or config.get(
-            "anki.field_mapping", {}
-        )
-        # If it's a BaseModel, convert to dict
-        if isinstance(field_mapping_value, BaseModel):
-            field_mapping_dict = field_mapping_value.model_dump()
-        else:
-            field_mapping_dict = field_mapping_value
+        field_mapping_dict = config.anki.field_mapping.model_dump()
         self.field_mapping: dict[str, str] = field_mapping_dict
         self.deck_name: str = config.anki.file.deck_name
         # Derive model name from field mapping - use CustomModel for non-standard fields
@@ -67,10 +62,12 @@ class FieldMapper:
         fields: dict[str, str] = {}
         for field_name, template in self.field_mapping.items():
             try:
-                fields[field_name] = self._substitute_template(template, variables)
+                fields[field_name] = self._substitute_template(
+                    template, cast(dict[str, Any], variables)
+                )
             except TemplateError as e:
                 # Log error but continue with partial result
-                print(f"Warning: Template error for field {field_name}: {e}")
+                logger.warning(f"Template error for field {field_name}: {e}")
 
         # Collect media files
         audio_files: list[str] = []
@@ -98,7 +95,7 @@ class FieldMapper:
             image_files=image_files,
         )
 
-    def _build_variable_context(self, card: CardData) -> dict[str, Any]:
+    def _build_variable_context(self, card: CardData) -> VariableContext:
         """Build variable context for template substitution.
 
         Args:
@@ -107,7 +104,7 @@ class FieldMapper:
         Returns:
             Dictionary of variables for template substitution.
         """
-        variables = {
+        variables: VariableContext = {
             "word": card.word,
             "context": card.context,
             "translation": card.translation or "",
@@ -131,7 +128,7 @@ class FieldMapper:
 
         # Add custom data
         for key, value in card.custom_data.items():
-            variables[key] = value
+            variables[key] = value  # type: ignore[literal-required]
 
         return variables
 
@@ -191,7 +188,7 @@ class FieldMapper:
         variables = self._build_variable_context(card)
 
         if tags_template:
-            tags_str = self._substitute_template(tags_template, variables)
+            tags_str = self._substitute_template(tags_template, cast(dict[str, Any], variables))
             tags = [tag.strip() for tag in tags_str.split() if tag.strip()]
         else:
             # Default tags

@@ -18,7 +18,7 @@ class CardQueue:
         """
         self.config = config
         # Use storage_dir from config if provided, otherwise use default QUEUE_DIR
-        storage_dir = config.get("card_generation.queue.storage_dir")
+        storage_dir = config.card_generation.queue.storage_dir
         if storage_dir:
             self.queue_file = Path(storage_dir) / "queue.json"
         else:
