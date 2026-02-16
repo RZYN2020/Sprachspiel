@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel
+
 from sprachspiel.config import Config
 from sprachspiel.core.card import AnkiCard, CardData
 
@@ -30,15 +32,24 @@ class FieldMapper:
         """
         self.config = config
         # Support both old and new config locations for backward compatibility
-        self.field_mapping: dict[str, str] = config.get("card_generation.field_mapping") or config.get("anki.field_mapping", {})
-        self.deck_name: str = config.get("anki.file.deck_name", "Default")
+        # Use strong-typed model access with fallback to get() method
+        field_mapping_value = config.get("card_generation.field_mapping") or config.get(
+            "anki.field_mapping", {}
+        )
+        # If it's a BaseModel, convert to dict
+        if isinstance(field_mapping_value, BaseModel):
+            field_mapping_dict = field_mapping_value.model_dump()
+        else:
+            field_mapping_dict = field_mapping_value
+        self.field_mapping: dict[str, str] = field_mapping_dict
+        self.deck_name: str = config.anki.file.deck_name
         # Derive model name from field mapping - use CustomModel for non-standard fields
         standard_fields = {"front", "back"}
         field_names = set(self.field_mapping.keys())
         if field_names and not field_names.issubset(standard_fields):
             self.model_name = "CustomModel"
         else:
-            self.model_name = config.get("anki.file.model_name", "Basic")
+            self.model_name = "Basic"
 
     def map_card(self, card: CardData) -> AnkiCard:
         """Map card data to Anki card.

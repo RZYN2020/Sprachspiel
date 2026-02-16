@@ -39,7 +39,8 @@ class CardEngine:
         from sprachspiel.anki.connect import AnkiConnect
         from sprachspiel.anki.file_export import FileExporter
 
-        mode = self.config.get("anki.mode")
+        # Use strong-typed configuration access
+        mode = self.config.anki.mode
 
         self.anki_connectors: list[BaseAnkiConnector] = []
         self.anki_connect: AnkiConnect | None = None
