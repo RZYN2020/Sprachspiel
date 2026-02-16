@@ -15,11 +15,23 @@ class AIService:
             config: Configuration instance.
         """
         self.config = config
-        self.provider = config.get("ai.provider", "openai")
-        self.api_key = config.get("ai.api_key", "")
-        self.base_url = config.get("ai.base_url", "https://api.openai.com/v1")
-        self.model = config.get("ai.model", "gpt-4o-mini")
-        self.functions = config.get("ai.functions", {})
+        # Support both strong-typed and dict-style config access for backward compatibility
+        # Try strong-typed first, fall back to get() method for testing scenarios
+        try:
+            ai_config = config.ai
+            self.provider = ai_config.provider
+            self.api_key = ai_config.api_key
+            self.base_url = ai_config.base_url
+            self.model = ai_config.model
+            # Convert Pydantic models to dict for backward compatibility
+            self.functions = {k: {"prompt": v.prompt} for k, v in ai_config.functions.items()}
+        except (AttributeError, TypeError):
+            # Fall back to dict-style access for testing with mocks
+            self.provider = config.get("ai.provider", "openai")
+            self.api_key = config.get("ai.api_key", "")
+            self.base_url = config.get("ai.base_url", "https://api.openai.com/v1")
+            self.model = config.get("ai.model", "gpt-4o-mini")
+            self.functions = config.get("ai.functions", {})
 
     def is_configured(self) -> bool:
         """Check if AI service is configured.
@@ -47,13 +59,9 @@ class AIService:
             Dictionary of custom functions.
         """
         reserved = {"translate", "example"}
-        return {
-            k: v for k, v in self.functions.items() if k not in reserved
-        }
+        return {k: v for k, v in self.functions.items() if k not in reserved}
 
-    async def call_function(
-        self, name: str, word: str, **kwargs: Any
-    ) -> str | None:
+    async def call_function(self, name: str, word: str, **kwargs: Any) -> str | None:
         """Call AI function for word.
 
         Args:
